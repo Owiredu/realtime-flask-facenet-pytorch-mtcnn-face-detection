@@ -10,6 +10,11 @@ This project was motivated by this repository:<br> https://github.com/dxue2012/p
     Open the command line or terminal with the current directory set to the project directory.
   </li>
   <li>
+    Run the command below to install the required modules:
+    <br>
+    <b>python -m pip install -r requirements.txt</b>
+  </li>
+  <li>
     Run the following commands in the exact order as displayed below:
     <br>
     <ol>
@@ -30,6 +35,15 @@ This project was motivated by this repository:<br> https://github.com/dxue2012/p
 <ul>
   <li>
     Open the command line or terminal with the current directory set to the project directory.
+  </li>
+  <li>
+    Run the command below to install the required modules:
+    <br>
+    <b>pip install -r requirements.txt</b>
+    <br>
+    OR
+    <br>
+    <b>pip3 install -r requirements.txt</b>
   </li>
   <li>
     Run the following commands in the exact order as displayed below:
