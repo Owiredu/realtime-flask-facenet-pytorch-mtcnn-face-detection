@@ -12,10 +12,16 @@ This project was motivated by this repository:<br> https://github.com/dxue2012/p
   <li>
     Run the following commands in the exact order as displayed below:
     <br>
-    <b>set FLASK_APP=app.py</b>
-    <br>
-    <b>set FLASK_ENV=development</b>
-    <br>
-    <b>flask run</b>
+    <ol>
+      <li>
+        <b>set FLASK_APP=app.py</b>
+      </li>
+      <li>
+        <b>set FLASK_ENV=development</b>
+      </li>
+      <li>
+        <b>flask run</b>
+      </li>
+    </ol>
   </li>
 </ul>
