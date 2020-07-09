@@ -70,25 +70,12 @@ class ImageProcessor(object):
         img = self.cv2_img_to_pillow(img)
         return img
 
-    def convertToGRAY(self, frame):  # argument types: Mat
-        """
-        Converts bgr image to grayscale
-        """
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
     def rectangle(self, img, rect):  # argument types: Mat, list
         """
         Draws a rectangle around the detected face
         """
         (x, y, w, h) = [int(val) for val in rect]
         cv2.rectangle(img, (x - 10, y - 10), (w + 10, h + 10), (0, 255, 0), 2, cv2.LINE_AA)
-
-    def putText(self, img, text, rect):  # argument types: Mat, String, list
-        """
-        Writes the id of the recognized person with the rectangle about the face
-        """
-        (x, y, w, h) = rect
-        cv2.putText(img, str(text), (x - 10, y - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
 
     def detect_faces(self, frame):
         """
