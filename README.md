@@ -17,9 +17,6 @@ This project was motivated by this repository:<br> https://github.com/dxue2012/p
         <b>set FLASK_APP=app.py</b>
       </li>
       <li>
-        <b>set FLASK_ENV=development</b>
-      </li>
-      <li>
         <b>flask run</b>
       </li>
     </ol>
@@ -40,9 +37,6 @@ This project was motivated by this repository:<br> https://github.com/dxue2012/p
     <ol>
       <li>
         <b>export FLASK_APP=app.py</b>
-      </li>
-      <li>
-        <b>export FLASK_ENV=development</b>
       </li>
       <li>
         <b>flask run</b>
