@@ -4,10 +4,10 @@ Face detection using Flask and MTCNN (Multi Task Convolutional Neural Networks) 
 This project was motivated by this repository:<br> https://github.com/dxue2012/python-webcam-flask
 
 # HOW TO RUN
-
-1. Open the command line or terminal with the current directory set to the project directory.
+<h3>WINDOWS</h3>
+Open the command line or terminal with the current directory set to the project directory.
 <br>
-2. Run the following commands in the exact order as displayed below:
+Run the following commands in the exact order as displayed below:
 <br>
 <b>set FLASK_APP=app.py</b>
 <br>
