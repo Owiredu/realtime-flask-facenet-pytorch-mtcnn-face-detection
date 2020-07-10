@@ -1,73 +1,57 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-
     <meta charset="utf-8">
-    <meta name="description" content="WebRTC code samples">
-    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
-    <meta itemprop="description" content="Client-side WebRTC code samples">
-    <meta itemprop="image" content="../../../images/webrtc-icon-192x192.png">
-    <meta itemprop="name" content="WebRTC code samples">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta id="theme-color" name="theme-color" content="#ffffff">
-
-    <base target="_blank">
-
-    <title>Face Registration</title>
-
-    <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/video-capture.css') }}">
-
-    <style>
-        div.select {
-            display: inline-block;
-            margin: 0 0 1em 0;
-        }
-
-        p.small {
-            font-size: 0.7em;
-        }
-
-        label {
-            width: 12em;
-            display: inline-block;
-        }
-        #imageElement {
-             width: 640px;
-             height: 480px;
-             background-color: #666;
-         }
-
-         #canvasElement {
-             width: 640px;
-             height: 480px;
-             display: none;
-         }
-    </style>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>FACIAL REGISTRATION</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.min.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/custom.css')}}">
 </head>
 
 <body>
-<div id="container">
+    <div class="card-group container">
 
-    <div class="select">
-        <label for="videoSource">Video source: </label><select id="videoSource"></select>
+        <div class="card" style="margin: 20px;">
+            <div class="card-header">
+                <h4 class="card-title text-center">INPUT STREAM</h4>
+            </div>
+
+            <video id="videoElement" playsinline autoplay class="w-100 d-block"></video>
+
+            <div class="card-body centered-div">
+                <label for="videoSource" class="bg-white border-white">Video source: </label>
+                <div class="select text-center">
+                    <select id="videoSource"></select>
+                </div>
+            </div>
+
+            <div class="card-footer centered-div">
+                <button class="btn btn-primary" onclick="startStream()">Start Camera</button>
+                <button class="btn btn-primary" onclick="stopStream()">Stop Camera</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin: 20px;">
+            <div class="card-header text-center">
+                <h4 class="card-title">OUTPUT STREAM</h4>
+            </div>
+            
+            <img id="imageElement" src="{{ url_for('video_feed') }}" class="w-100 d-block">
+            <canvas id="canvasElement" style="display: none;"></canvas>
+        </div>
+
     </div>
 
-    <video id="videoElement" playsinline autoplay></video>
-
-    <img id="imageElement" src="{{ url_for('video_feed') }}">
-    <canvas id="canvasElement"></canvas>
-
-</div>
-
-<!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script> -->
-<script src="{{ url_for('static', filename='js/jquery-3.2.1.slim.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
-<script src="{{ url_for('static', filename='js/video-capture.js') }}"></script>
-<!-- <script src="{{ url_for('static', filename='js/video_stream_proc.js') }}"></script> -->
-<!-- <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> -->
-<script src="{{ url_for('static', filename='js/adapter-latest.js') }}"></script>
+    <script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+    <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>  -->
+    <script src="{{ url_for('static', filename='js/jquery-3.2.1.slim.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/video-capture.js') }}"></script>
+    <!-- <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> -->
+    <script src="{{ url_for('static', filename='js/adapter-latest.js') }}"></script>
+    </script>
 </body>
+
 </html>

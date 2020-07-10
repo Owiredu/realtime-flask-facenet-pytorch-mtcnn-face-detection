@@ -3,15 +3,17 @@ from img_processor import ImageProcessor
 import logging
 from flask import Flask, render_template, Response
 from flask_socketio import SocketIO
+from engineio.payload import Payload
 from camera import Camera
 from utils import base64_to_pil_image, pil_image_to_base64
 
 
 app = Flask(__name__)
 app.logger.addHandler(logging.StreamHandler(stdout))
-app.config['SECRET_KEY'] = 'secret!'
+app.config['SECRET_KEY'] = b'x\xb3\x10\xfad\xb0MYg0N\xe5\xdd\x0c\xa7\xee+\x1c\x0cb\x97e\xc3fT\x1d~\xbd\xc2\x0b\x06='
 app.config['DEBUG'] = True
 
+Payload.max_decode_packets = 100000
 socketio = SocketIO(app)
 camera = Camera(ImageProcessor())
 
