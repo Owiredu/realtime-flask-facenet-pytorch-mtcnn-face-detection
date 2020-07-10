@@ -16,14 +16,14 @@ socketio = SocketIO(app)
 camera = Camera(ImageProcessor())
 
 
-@socketio.on('input_image', namespace='/test')
-def test_message(input):
+@socketio.on('input_image', namespace='/capture')
+def capture_input_image(input):
     input = input.split(",")[1]
     camera.enqueue_input(input)
 
 
-@socketio.on('connect', namespace='/test')
-def test_connect():
+@socketio.on('connect', namespace='/capture')
+def video_capture_connect():
     app.logger.info("client connected")
 
 
@@ -32,7 +32,7 @@ def index():
     """
     Video streaming home page.
     """
-    return render_template('index.html')
+    return render_template('face-detection.html')
 
 
 def gen():
