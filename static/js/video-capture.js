@@ -86,8 +86,7 @@ function start() {
   const videoSource = videoSelect.value;
   const constraints = {
     video: {
-      deviceId: videoSource ? {exact: videoSource} : undefined, 
-      width: { min: 640 }, height: { min: 480 }
+      deviceId: videoSource ? {exact: videoSource} : undefined
     }
   };
   navigator.mediaDevices.getUserMedia(constraints).then(getStream).then(getDevices).catch(handleError);
