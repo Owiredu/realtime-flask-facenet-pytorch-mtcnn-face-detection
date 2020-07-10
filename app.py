@@ -13,7 +13,7 @@ app.logger.addHandler(logging.StreamHandler(stdout))
 app.config['SECRET_KEY'] = b'x\xb3\x10\xfad\xb0MYg0N\xe5\xdd\x0c\xa7\xee+\x1c\x0cb\x97e\xc3fT\x1d~\xbd\xc2\x0b\x06='
 app.config['DEBUG'] = True
 
-Payload.max_decode_packets = 100000
+Payload.max_decode_packets = 2097152 # 2MB
 socketio = SocketIO(app)
 camera = Camera(ImageProcessor())
 
