@@ -27,7 +27,7 @@ This project was motivated by this repository:<br> https://github.com/dxue2012/p
     </ol>
   </li>
   <li>
-    Open the url <i>http://127.0.0.1:5000</i> in a web browser.
+    Open the url http://127.0.0.1:5000 in a web browser.
   </li>
 </ul>
 <h4>OR</h4>
