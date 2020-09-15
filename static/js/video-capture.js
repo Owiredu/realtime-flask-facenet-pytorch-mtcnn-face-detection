@@ -10,16 +10,16 @@ var isStreaming = false;
 
 var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
 
-socket.on('connect', function() {
-  console.log('Connected!');
-});
+// socket.on('connect', function() {
+//   document.querySelector("#conn-status").textContent = "Connected!";
+// });
 
 function init() {
   var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
 
-  socket.on('connect', function() {
-    console.log('Connected!');
-  });
+  // socket.on('connect', function() {
+  //   document.querySelector("#conn-status").textContent = "Connected!";
+  // });
 }
 
 function sendSnapshot() {
@@ -48,9 +48,10 @@ function getDevices(deviceInfos) {
     if (deviceInfo.kind === 'videoinput') {
       option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
       videoSelect.appendChild(option);
-    } else {
-      console.log('Some other kind of source/device: ', deviceInfo);
-    }
+    } 
+    // else {
+    //   console.log('Some other kind of source/device: ', deviceInfo);
+    // }
   }
   selectors.forEach((select, selectorIndex) => {
     if (Array.prototype.slice.call(select.childNodes).some(n => n.value === values[selectorIndex])) {

@@ -6,39 +6,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>FACE DETECTION</title>
     <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.min.css')}}">
+    <!-- <link rel="stylesheet" href="{{url_for('static', filename='css/font-awesome.min.css')}}"> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="{{url_for('static', filename='css/custom.css')}}">
 </head>
 
 <body>
-    <div class="card-group container">
 
-        <div class="card" style="margin: 20px;">
-            <div class="card-header">
-                <h4 class="card-title text-center">INPUT STREAM</h4>
-            </div>
+    <div class="container">
 
-            <video id="videoElement" playsinline autoplay class="w-100 d-block"></video>
-
-            <div class="card-body centered-div">
-                <label for="videoSource" class="bg-white border-white">Video source: </label>
-                <div class="select">
-                    <select id="videoSource"></select>
-                </div>
-            </div>
-
-            <div class="card-footer centered-div">
-                <button class="btn btn-primary" onclick="startStream()">Start Camera</button>
-                <button class="btn btn-primary" onclick="stopStream()">Stop Camera</button>
-            </div>
+        <div class="centered-div" style="margin-top: 20px;">
+            <i onclick="" title="Tag a person" class="btn-primary btn fa fa-tag fa-2x"></i>
+            <i onclick="" title="Register" class="btn-primary btn fa fa-address-card-o fa-2x"></i> 
+            <i onclick="" title="Recognition records" class="btn-primary btn fa fa-database fa-2x"></i> 
+            <i onclick="" title="Settings" class="btn-primary btn fa fa-cog fa-2x"></i>
         </div>
 
-        <div class="card" style="margin: 20px;">
-            <div class="card-header text-center">
-                <h4 class="card-title">OUTPUT STREAM</h4>
+        <div class="card-group container row">
+    
+            <div class="card col-sm-6" style="margin: 20px;">
+                <div class="card-header">
+                    <h4 class="card-title text-center">INPUT STREAM</h4>
+                </div>
+    
+                <video id="videoElement" playsinline autoplay class="w-100 d-block"></video>
+    
+                <div class="card-body centered-div">
+                    <!-- <label for="videoSource" class="bg-white border-white">Video source: </label> -->
+                    <div class="select">
+                        <select id="videoSource"></select>
+                    </div>
+                </div>
+    
+                <div class="card-footer centered-div">
+                    <!-- <button class="btn btn-primary" onclick="startStream()">Start Camera</button>
+                    <button class="btn btn-primary" onclick="stopStream()">Stop Camera</button> -->
+                    <div class="centered-div">
+                        <i class="btn-primary btn fa fa-play fa-lg" onclick="startStream()" title="Start camera"></i>
+                        <i class="btn-primary btn fa fa-stop fa-lg" onclick="stopStream()" title="Stop camera"></i>
+                        <i class="btn-primary btn fa fa-camera fa-lg" onclick="" title="Take snapshot"></i> 
+                        <i class="btn-primary btn fa fa-floppy-o fa-lg" onclick="" title="Save video"></i>
+                        <i class="btn-primary btn fa fa-smile-o fa-lg" onclick="" title="Activate facial recognition"></i>
+                        <i class="btn-primary btn fa fa-wheelchair-alt fa-lg" onclick="" title="Activate motion detection"></i> 
+                        <!-- <i class="btn-primary btn fa fa-trash fa-lg" onclick="" title="Delete Stream"></i>  -->
+                    </div>
+                </div>
             </div>
-            
-            <img id="imageElement" src="{{ url_for('video_feed') }}" class="w-100 d-block">
-            <canvas id="canvasElement" style="display: none;"></canvas>
+    
+    
+            <div class="card col-sm-6" style="margin: 20px;">
+                <div class="card-header text-center">
+                    <h4 class="card-title">OUTPUT STREAM</h4>
+                </div>
+                
+                <img id="imageElement" src="{{ url_for('video_feed') }}" class="w-100 d-block">
+                <canvas id="canvasElement" style="display: none;"></canvas>
+    
+                <!-- <div class="card-body centered-div">
+                    <p id="conn-status"></p>
+                </div> -->
+            </div>
+    
         </div>
 
     </div>
