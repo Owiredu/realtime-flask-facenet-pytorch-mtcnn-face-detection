@@ -5,10 +5,24 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>FACE DETECTION</title>
+    <link href="{{ url_for('static', filename='assets/css/demo2/pages/general/wizard/wizard-2.css') }}" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.min.css')}}">
+    <link href="{{ url_for('static', filename='assets/vendors/global/vendors.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='assets/css/demo2/style.bundle.css') }}" rel="stylesheet" type="text/css" />
     <!-- <link rel="stylesheet" href="{{url_for('static', filename='css/font-awesome.min.css')}}"> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="{{url_for('static', filename='css/custom.css')}}">
+    <!--begin::Fonts -->
+    <script src="{{ url_for('static', filename='assets/ajax/libs/webfont/1.6.16/webfont.js') }}"></script>
+    <script>
+        WebFont.load({
+            google: {"families":["Poppins:300,400,500,600,700"]},
+            active: function() {
+                sessionStorage.fonts = true;
+            }
+        });
+    </script>
+    <!--end::Fonts -->
 </head>
 
 <body>
@@ -29,7 +43,7 @@
                     <h4 class="card-title text-center">INPUT STREAM</h4>
                 </div>
     
-                <video id="videoElement" playsinline autoplay class="w-100 d-block"></video>
+                <video id="videoElement" playsinline autoplay class="w-100 d-block" poster="{{ url_for('static', filename='images/default_img.jpg') }}"></video>
     
                 <div class="card-body centered-div">
                     <!-- <label for="videoSource" class="bg-white border-white">Video source: </label> -->
@@ -42,12 +56,12 @@
                     <!-- <button class="btn btn-primary" onclick="startStream()">Start Camera</button>
                     <button class="btn btn-primary" onclick="stopStream()">Stop Camera</button> -->
                     <div class="centered-div">
-                        <i class="btn-primary btn fa fa-play fa-lg" onclick="startStream()" title="Start camera"></i>
-                        <i class="btn-primary btn fa fa-stop fa-lg" onclick="stopStream()" title="Stop camera"></i>
-                        <i class="btn-primary btn fa fa-camera fa-lg" onclick="" title="Take snapshot"></i> 
-                        <i class="btn-primary btn fa fa-floppy-o fa-lg" onclick="" title="Save video"></i>
-                        <i class="btn-primary btn fa fa-smile-o fa-lg" onclick="" title="Activate facial recognition"></i>
-                        <i class="btn-primary btn fa fa-wheelchair-alt fa-lg" onclick="" title="Activate motion detection"></i> 
+                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-play fa-lg" onclick="startStream()" title="Start camera"></i></span>
+                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-stop fa-lg" onclick="stopStream()" title="Stop camera"></i></span>
+                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-camera fa-lg" onclick="takeSnapshot()" title="Take snapshot"></i></span> 
+                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-floppy-o fa-lg" onclick="saveVideo()" title="Start saving video" id="saveVideoBtn"></i></span>
+                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-smile-o fa-lg" onclick="facialRecognition()" title="Activate facial recognition"></i></span>
+                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-wheelchair-alt fa-lg" onclick="motionDetection()" title="Activate motion detection"></i></span> 
                         <!-- <i class="btn-primary btn fa fa-trash fa-lg" onclick="" title="Delete Stream"></i>  -->
                     </div>
                 </div>
@@ -62,19 +76,30 @@
                 <img id="imageElement" src="{{ url_for('video_feed') }}" class="w-100 d-block">
                 <canvas id="canvasElement" style="display: none;"></canvas>
     
-                <!-- <div class="card-body centered-div">
+                <div class="card-body centered-div">
                     <p id="conn-status"></p>
-                </div> -->
+                </div>
             </div>
     
         </div>
 
     </div>
 
+    <!-- begin::Global Config(global config for global JS sciprts) -->
+    <script>
+        var KTAppOptions = {"colors":{"state":{"brand":"#374afb","light":"#ffffff","dark":"#282a3c","primary":"#5867dd","success":"#34bfa3","info":"#36a3f7","warning":"#ffb822","danger":"#fd3995"},"base":{"label":["#c5cbe3","#a1a8c3","#3d4465","#3e4466"],"shape":["#f0f3ff","#d9dffa","#afb4d4","#646c9a"]}}};
+    </script>
+    <!-- end::Global Config -->
+    <script src="{{ url_for('static', filename='assets/vendors/global/vendors.bundle.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='assets/js/demo2/scripts.bundle.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='assets/vendors/custom/datatables/datatables.bundle.js') }}" type="text/javascript"></script>
+    <!-- <script src="{{ url_for('static', filename='assets/js/demo2/pages/crud/forms/widgets/transfers.js') }}" type="text/javascript"></script> -->
+    <script src="{{ url_for('static', filename='assets/js/demo2/pages/components/extended/sweetalert2.js') }}" type="text/javascript"></script>
+    <!-- <script src="{{ url_for('static', filename='assets/js/demo2/pages/dashboard.js') }}" type="text/javascript"></script> -->
+            <!-- <script src="{{ url_for('static', filename='assets/js/demo2/pages/crud/forms/widgets/select2.js') }}" type="text/javascript"></script> -->
     <script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
     <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
     <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>  -->
-    <script src="{{ url_for('static', filename='js/jquery-3.2.1.slim.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
     <script src="{{ url_for('static', filename='js/video-capture.js') }}"></script>
     <!-- <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> -->

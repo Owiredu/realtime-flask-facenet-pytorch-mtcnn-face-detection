@@ -63,3 +63,11 @@ button {
   text-align: center;
 }
 
+.stream_controls_icons {
+  display: inline-block;
+  margin: 5px;
+}
+
+.active_selected_icon {
+  background-color: green;
+}

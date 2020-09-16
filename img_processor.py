@@ -1,8 +1,12 @@
 from PIL import Image
 from facenet_pytorch import MTCNN
+from numpy.core.fromnumeric import resize
 import torch
 import cv2
 import numpy as np
+import os
+import time
+from app import app
 
 
 class ImageProcessor(object):
@@ -19,6 +23,14 @@ class ImageProcessor(object):
         self.num_of_frames_to_skip = 5
         # set the resized shape
         self.image_resize_shape = (320, 240)
+        # initialize the general video writer for saving video
+        self.video_writer_fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        self.video_writer = cv2.VideoWriter()
+        self.fps = 30
+        # monitor the recording stream so that whenever it is stopped and started, the next one has a different filename
+        self.is_file_named = False
+        # set the zero matrix to be used as the black background for the time in the frame
+        self.black_surface = np.zeros((18, 62, 3), np.uint8)
 
     def pillow_to_cv2_img(self, img):
         """
@@ -40,14 +52,24 @@ class ImageProcessor(object):
         img = Image.fromarray(img)
         return img
 
-    def apply_processing(self, img):
+    def apply_processing(self, img, resize, snapshot=False, save_video=False):
         """
         Applies all the required processing to the images received from the video stream
         """
         # convert the pillow image to a numpy array for use in opencv
         img = self.pillow_to_cv2_img(img)
-        # resize the image to 320 x 240
-        img = cv2.resize(img, self.image_resize_shape)
+        # save the image if the snapshot is true
+        if snapshot:
+            self.take_snapshot(img, 'cam')
+        # save the video if the save video is turned on
+        if save_video:
+            print("saving video ...")
+        else: 
+            self.is_file_named = False
+        # resize the image if resize is true
+        if resize:
+            # resize the image to 320 x 240
+            img = cv2.resize(img, self.image_resize_shape)
         # skip frames specified
         if self.skip_frame_counter == self.num_of_frames_to_skip:
             # detect the faces
@@ -97,3 +119,52 @@ class ImageProcessor(object):
             cropped_faces.append(frame[y : h, x : w])
         # return frame with detected faces
         return cropped_faces, faces_dimensions
+
+
+    def take_snapshot(self, img, camera_id):  # argument types: String or int
+        """
+        Takes a snapshot
+        """
+        # get current time, extract the date from and create the folder if it does not exist. Name the image with the time value
+        time_taken = time.time()
+        current_date = time.strftime('%Y-%m-%d', time.localtime(int(time_taken)))
+        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'snapshots', current_date), exist_ok=True)
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'snapshots', current_date, str(camera_id) + '_' + str(time_taken) + '.jpg')
+        cv2.imwrite(image_path, img)
+
+
+    # argument types: String or int
+    def activate_vid_saving_to_disk(self, camera_id):
+        """
+        Starts saving the video to the local drive
+        """
+        # get current time, extract the date from and create the folder if it does not exist.
+        # Name the video with the time value
+        time_taken = time.time()
+        current_date = time.strftime(
+            '%Y-%m-%d', time.localtime(int(time_taken)))
+        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'saved_videos', current_date), exist_ok=True)
+        self.video_path = os.path.join(app.config['UPLOAD_FOLDER'], 'saved_videos', current_date, str(camera_id) + '_' + str(time_taken) + '.avi')
+        # enable video recording
+        self.is_file_named = True
+
+
+    def save_video_stream_to_file(self, frame):  # argument types: Mat
+        """
+        This method saves the video when save is enabled
+        """
+        if self.save_video:
+            if self.is_file_named:
+                # open video recording
+                self.video_writer.open(self.video_path, self.video_writer_fourcc, self.fps, (frame.shape[1], frame.shape[0]), self.is_color())
+                self.is_file_named = False
+            # write the current time on the frame with a black background at the bottom left corner
+            if self.time_visible:
+                if self.is_color():
+                    frame[frame.shape[0]-18:frame.shape[0], 0:62] = self.black_surface
+                cv2.putText(frame, time.strftime('%H:%M:%S', time.localtime(time.time())), (2, frame.shape[0]-5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+            # write the frame
+            self.video_writer.write(frame)
+        else:
+            self.video_writer.release()
+            self.is_file_named = False

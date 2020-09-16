@@ -1,3 +1,8 @@
+/**
+ * THIS SECTION HANDLES THE VIDEO CAPTURE, TRANSMISSION TO SERVER FOR PROCESSING AND RETURNING THE PROCESSED FRAMES.
+ * THIS INCLUDES PAUSING AND PLAYING THE VIDEO STREAM, SELECTING AND SWITCHING CAMERAS.
+ */
+
 let namespace = "/capture";
 let videoElement = document.querySelector('#videoElement');
 let videoSelect = document.querySelector('select#videoSource');
@@ -87,14 +92,16 @@ function start() {
   const videoSource = videoSelect.value;
   const constraints = {
     video: {
-      deviceId: videoSource ? {exact: videoSource} : undefined
+      deviceId: videoSource ? {exact: videoSource} : undefined,
     }
   };
   navigator.mediaDevices.getUserMedia(constraints).then(getStream).then(getDevices).catch(handleError);
 }
 
 function startStream() {
-  videoElement.play()
+  videoElement.setAttribute('poster', "");
+  videoElement.load();
+  videoElement.play();
   start();
   isStreaming = true;
 }
@@ -114,6 +121,9 @@ function stopStream() {
 
   localMediaStream = null;
   isStreaming = false;
+
+  videoElement.setAttribute('poster', "/static/images/default_img.jpg");
+  videoElement.load();
 }
 
 function closeSocket() {
@@ -121,3 +131,108 @@ function closeSocket() {
 }
 
 videoSelect.onchange = startStreamOnCameraChange;
+
+
+/**
+ * THIS SECTION HANDLES HANDLES OTHER FUNCTIONS
+ */
+
+ function takeSnapshot() {
+
+   if (!localMediaStream && !isStreaming) {
+     return;
+   }
+
+   $.ajax({
+    url: "/take_snapshot",
+
+    method: "POST",
+
+    error: function(res, err) {
+      swal.fire({
+        "title": "",
+        "text": res.responseJSON.message, 
+        "type": "error",
+        "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+      });
+    },
+
+    success: function(res) {
+      swal.fire({
+        "title": "", 
+        "text": res.message, 
+        "type": "success",
+        "confirmButtonText": 'OK',
+        "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+      });
+    }
+  });
+ }
+
+ 
+ function saveVideo(caller) {
+  
+  //  if (!localMediaStream && !isStreaming) {
+  //    return;
+  //  }
+
+   let saveStatus = "0";
+   saveVideoBtn = document.querySelector("#saveVideoBtn");
+   let class_attr = saveVideoBtn.getAttribute("class");
+   if (class_attr.includes("btn-primary")) {
+     saveStatus = "1";
+     saveVideoBtn.setAttribute("class", "btn-success btn fa fa-floppy-o fa-lg");
+     saveVideoBtn.setAttribute("title", "Stop saving video");
+   } else {
+     saveStatus = "0";
+    saveVideoBtn.setAttribute("class", "btn-primary btn fa fa-floppy-o fa-lg");
+    saveVideoBtn.setAttribute("title", "Start saving video");
+   }
+
+   $.ajax({
+    url: "/save_video/" + saveStatus,
+
+    method: "POST",
+
+    error: function(res, err) {
+      swal.fire({
+        "title": "",
+        "text": res.responseJSON.message, 
+        "type": "error",
+        "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+      });
+    },
+
+    success: function(res) {
+      // swal.fire({
+      //   "title": "", 
+      //   "text": res.message, 
+      //   "type": "success",
+      //   "confirmButtonText": 'OK',
+      //   "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+      // });
+    }
+  });
+ }
+
+
+ function facialRecognition() {
+  swal.fire({
+    "title": "",
+    "text": "Facial recognition", 
+    "type": "success",
+    "confirmButtonText": 'OK',
+    "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+  });
+ }
+
+
+ function motionDetection() {
+  swal.fire({
+    "title": "",
+    "text": "Motion detection", 
+    "type": "success",
+    "confirmButtonText": 'OK',
+    "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+  });
+ }
