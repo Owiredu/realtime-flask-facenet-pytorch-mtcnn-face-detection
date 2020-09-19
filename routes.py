@@ -54,13 +54,38 @@ def video_feed():
     return Response(gen(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+def set_checkable_features_to_default():
+    """
+    Sets the checkable features to their default states
+    """
+    camera.save_video = False
+
+
+@app.route('/reset_checkable_features', methods=['GET'])
+def reset_checkable_features():
+    """
+    Sets the checkable features to their default states
+    """
+    try:
+        set_checkable_features_to_default()
+        return Response(json.dumps({'message': 'Checkable items set to default successfully'}), status=200, mimetype='application/json')
+    except:
+        return Response(json.dumps({'message': 'Failed to set checkable items to default'}), status=400, mimetype='application/json')
+
+
 def save_snapshot():
+    """
+    Saves a the current frame
+    """
     app.logger.info("Saving snapshot ...")
     camera.snapshot = True
 
 
 @app.route('/take_snapshot', methods=['POST'])
 def take_snapshot():
+    """
+    Saves a the current frame
+    """
     try:
         save_snapshot()
         return Response(json.dumps({'message': 'Snapshot taken successfully'}), status=200, mimetype='application/json')
@@ -69,6 +94,9 @@ def take_snapshot():
 
 
 def save_video_stream(status):
+    """
+    Activates video saving
+    """
     app.logger.info("Saving video ...")
     if int(status) == 0:
         camera.save_video = False
@@ -78,6 +106,9 @@ def save_video_stream(status):
 
 @app.route('/save_video/<status>', methods=['POST'])
 def save_video(status):
+    """
+    Activates video saving
+    """
     try:
         save_video_stream(status)
         return Response(json.dumps({'message': 'Video saving status has been switched.'}), status=200, mimetype='application/json')

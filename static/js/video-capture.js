@@ -1,7 +1,7 @@
-/**
- * THIS SECTION HANDLES THE VIDEO CAPTURE, TRANSMISSION TO SERVER FOR PROCESSING AND RETURNING THE PROCESSED FRAMES.
- * THIS INCLUDES PAUSING AND PLAYING THE VIDEO STREAM, SELECTING AND SWITCHING CAMERAS.
- */
+//#####################################################################################################################
+//# THIS SECTION HANDLES THE VIDEO CAPTURE, TRANSMISSION TO SERVER FOR PROCESSING AND RETURNING THE PROCESSED FRAMES. #
+//# THIS INCLUDES PAUSING AND PLAYING THE VIDEO STREAM, SELECTING AND SWITCHING CAMERAS.                              #
+//#####################################################################################################################
 
 let namespace = "/capture";
 let videoElement = document.querySelector('#videoElement');
@@ -20,6 +20,9 @@ var socket = io.connect(location.protocol + '//' + document.domain + ':' + locat
 // });
 
 function init() {
+  /**
+   * Opens a socket connection to the server
+   */
   var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
 
   // socket.on('connect', function() {
@@ -27,7 +30,10 @@ function init() {
   // });
 }
 
-function sendSnapshot() {
+function sendFrame() {
+  /**
+   * Sends a captured frame to the server
+   */
   if (!localMediaStream && !isStreaming) {
     return;
   }
@@ -39,6 +45,9 @@ function sendSnapshot() {
 }
 
 function getDevices(deviceInfos) {
+  /**
+   * Gets all the connected video devices
+   */
   // Handles being called several times to update labels. Preserve values.
   const values = selectors.map(select => select.value);
   selectors.forEach(select => {
@@ -68,12 +77,16 @@ function getDevices(deviceInfos) {
 navigator.mediaDevices.enumerateDevices().then(getDevices).catch(handleError);
 
 function getStream(stream) {
+  /**
+   * Makes the video stream available to the browser window and the video element.
+   * Also refreshes the devices in the select widget.
+   */
   window.stream = stream; // make stream available to console
   videoElement.srcObject = stream;
 
   localMediaStream = stream;
 
-  setInterval(function () { sendSnapshot(); }, 50);
+  setInterval(function () { sendFrame(); }, 50);
   // Refresh button list in case labels have become available
   return navigator.mediaDevices.enumerateDevices();
 }
@@ -83,6 +96,10 @@ function handleError(error) {
 }
 
 function start() {
+  /**
+   * Setup the media device and the video parameters, stop the any streams that are running
+   * and begin streaming
+   */
   init();
   if (window.stream) {
     window.stream.getTracks().forEach(track => {
@@ -99,6 +116,9 @@ function start() {
 }
 
 function startStream() {
+  /**
+   * Starts streaming video from the selected source
+   */
   videoElement.setAttribute('poster', "");
   videoElement.load();
   videoElement.play();
@@ -107,12 +127,18 @@ function startStream() {
 }
 
 function startStreamOnCameraChange() {
+  /**
+   * Start streaming a video when the camera is changed
+   */
   if (isStreaming) {
     startStream();
   }
 }
 
 function stopStream() {
+  /**
+   * Stops streaming the video
+   */
   videoElement.pause();
 
   stream.getTracks().forEach(function(track) {
@@ -127,26 +153,29 @@ function stopStream() {
 }
 
 function closeSocket() {
+  /**
+   * Disconnects or closes the socket
+   */
   socket.disconnect();
 }
 
+// automatically start new camera after selecting it
 videoSelect.onchange = startStreamOnCameraChange;
 
 
-/**
- * THIS SECTION HANDLES HANDLES OTHER FUNCTIONS
- */
+//################################################
+//# THIS SECTION HANDLES HANDLES OTHER FUNCTIONS #
+//################################################
 
- function takeSnapshot() {
 
-   if (!localMediaStream && !isStreaming) {
-     return;
-   }
+function resetCheckableFeatures() {
+  /**
+   * Resets all the checkable features to default
+   */
+  $.ajax({
+    url: "/reset_checkable_features",
 
-   $.ajax({
-    url: "/take_snapshot",
-
-    method: "POST",
+    method: "GET",
 
     error: function(res, err) {
       swal.fire({
@@ -158,38 +187,82 @@ videoSelect.onchange = startStreamOnCameraChange;
     },
 
     success: function(res) {
-      swal.fire({
-        "title": "", 
-        "text": res.message, 
-        "type": "success",
-        "confirmButtonText": 'OK',
-        "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
-      });
+      // swal.fire({
+      //   "title": "", 
+      //   "text": res.message, 
+      //   "type": "success",
+      //   "confirmButtonText": 'OK',
+      //   "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+      // });
     }
   });
- }
+}
 
- 
- function saveVideo(caller) {
-  
-  //  if (!localMediaStream && !isStreaming) {
-  //    return;
-  //  }
 
-   let saveStatus = "0";
-   saveVideoBtn = document.querySelector("#saveVideoBtn");
-   let class_attr = saveVideoBtn.getAttribute("class");
-   if (class_attr.includes("btn-primary")) {
-     saveStatus = "1";
-     saveVideoBtn.setAttribute("class", "btn-success btn fa fa-floppy-o fa-lg");
-     saveVideoBtn.setAttribute("title", "Stop saving video");
-   } else {
-     saveStatus = "0";
+$(document).ready(function() {
+  // reset all the checkable features when a page loads or reloads
+  resetCheckableFeatures();
+});
+
+
+function takeSnapshot() {
+  /**
+   * Saves the current frame that has been captured
+   */
+  if (!localMediaStream && !isStreaming) {
+    return;
+  }
+
+  $.ajax({
+  url: "/take_snapshot",
+
+  method: "POST",
+
+  error: function(res, err) {
+    swal.fire({
+      "title": "",
+      "text": res.responseJSON.message, 
+      "type": "error",
+      "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+    });
+  },
+
+  success: function(res) {
+    swal.fire({
+      "title": "", 
+      "text": res.message, 
+      "type": "success",
+      "confirmButtonText": 'OK',
+      "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+    });
+  }
+});
+}
+
+
+function saveVideo() {
+  /**
+   * Activates video saving so that the server saves the video being captured
+   */
+  if (!localMediaStream && !isStreaming) {
+    return;
+  }
+
+  let saveStatus = "0";
+  saveVideoBtn = document.querySelector("#saveVideoBtn");
+  let class_attr = saveVideoBtn.getAttribute("class");
+
+  if (class_attr.includes("btn-primary")) {
+    saveStatus = "1";
+    saveVideoBtn.setAttribute("class", "btn-success btn fa fa-floppy-o fa-lg");
+    saveVideoBtn.setAttribute("title", "Stop saving video");
+  } else {
+    saveStatus = "0";
     saveVideoBtn.setAttribute("class", "btn-primary btn fa fa-floppy-o fa-lg");
     saveVideoBtn.setAttribute("title", "Start saving video");
-   }
+  }
 
-   $.ajax({
+  $.ajax({
     url: "/save_video/" + saveStatus,
 
     method: "POST",
@@ -213,10 +286,12 @@ videoSelect.onchange = startStreamOnCameraChange;
       // });
     }
   });
- }
+}
 
-
- function facialRecognition() {
+function facialRecognition() {
+  /**
+   * Activates facial recognition
+   */
   swal.fire({
     "title": "",
     "text": "Facial recognition", 
@@ -224,10 +299,13 @@ videoSelect.onchange = startStreamOnCameraChange;
     "confirmButtonText": 'OK',
     "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
   });
- }
+}
 
 
- function motionDetection() {
+function motionDetection() {
+  /**
+   * Activates motion detection
+   */
   swal.fire({
     "title": "",
     "text": "Motion detection", 
@@ -235,4 +313,4 @@ videoSelect.onchange = startStreamOnCameraChange;
     "confirmButtonText": 'OK',
     "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
   });
- }
+}

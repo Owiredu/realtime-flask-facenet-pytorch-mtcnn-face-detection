@@ -29,28 +29,8 @@ class ImageProcessor(object):
         self.fps = 30
         # monitor the recording stream so that whenever it is stopped and started, the next one has a different filename
         self.is_file_named = False
-        # set the zero matrix to be used as the black background for the time in the frame
-        self.black_surface = np.zeros((18, 62, 3), np.uint8)
+        self.video_writer_active = False
 
-    def pillow_to_cv2_img(self, img):
-        """
-        Converts a pillow image to a numpy array
-        """
-        # convert a pillow image to a RGB numpy array
-        img = np.array(img)
-        # convert a RGB numpy array to a BGR numpy array
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        return img
-
-    def cv2_img_to_pillow(self, img):
-        """
-        Converts an image from a numpy array to a pillow image.
-        """
-        # convert image from BGR to RGB format
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # convert a RGB numpy array to a pillow image
-        img = Image.fromarray(img)
-        return img
 
     def apply_processing(self, img, resize, snapshot=False, save_video=False):
         """
@@ -60,12 +40,17 @@ class ImageProcessor(object):
         img = self.pillow_to_cv2_img(img)
         # save the image if the snapshot is true
         if snapshot:
-            self.take_snapshot(img, 'cam')
+            self.take_snapshot(img, 'cam_id')
         # save the video if the save video is turned on
         if save_video:
-            print("saving video ...")
+            if not self.video_writer_active:
+                self.activate_vid_saving_to_disk('cam_id')
+                self.video_writer_active = True
+            self.save_video_stream_to_file(img)
         else: 
+            self.video_writer.release()
             self.is_file_named = False
+            self.video_writer_active = False
         # resize the image if resize is true
         if resize:
             # resize the image to 320 x 240
@@ -91,6 +76,29 @@ class ImageProcessor(object):
         # convert numpy array to a pillow img
         img = self.cv2_img_to_pillow(img)
         return img
+
+
+    def pillow_to_cv2_img(self, img):
+        """
+        Converts a pillow image to a numpy array
+        """
+        # convert a pillow image to a RGB numpy array
+        img = np.array(img)
+        # convert a RGB numpy array to a BGR numpy array
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        return img
+        
+
+    def cv2_img_to_pillow(self, img):
+        """
+        Converts an image from a numpy array to a pillow image.
+        """
+        # convert image from BGR to RGB format
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # convert a RGB numpy array to a pillow image
+        img = Image.fromarray(img)
+        return img
+
 
     def rectangle(self, img, rect):  # argument types: Mat, list
         """
@@ -141,8 +149,7 @@ class ImageProcessor(object):
         # get current time, extract the date from and create the folder if it does not exist.
         # Name the video with the time value
         time_taken = time.time()
-        current_date = time.strftime(
-            '%Y-%m-%d', time.localtime(int(time_taken)))
+        current_date = time.strftime('%Y-%m-%d', time.localtime(int(time_taken)))
         os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'saved_videos', current_date), exist_ok=True)
         self.video_path = os.path.join(app.config['UPLOAD_FOLDER'], 'saved_videos', current_date, str(camera_id) + '_' + str(time_taken) + '.avi')
         # enable video recording
@@ -153,18 +160,9 @@ class ImageProcessor(object):
         """
         This method saves the video when save is enabled
         """
-        if self.save_video:
-            if self.is_file_named:
-                # open video recording
-                self.video_writer.open(self.video_path, self.video_writer_fourcc, self.fps, (frame.shape[1], frame.shape[0]), self.is_color())
-                self.is_file_named = False
-            # write the current time on the frame with a black background at the bottom left corner
-            if self.time_visible:
-                if self.is_color():
-                    frame[frame.shape[0]-18:frame.shape[0], 0:62] = self.black_surface
-                cv2.putText(frame, time.strftime('%H:%M:%S', time.localtime(time.time())), (2, frame.shape[0]-5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
-            # write the frame
-            self.video_writer.write(frame)
-        else:
-            self.video_writer.release()
+        if self.is_file_named:
+            # open video recording
+            self.video_writer.open(self.video_path, self.video_writer_fourcc, self.fps, (frame.shape[1], frame.shape[0]), True)
             self.is_file_named = False
+        # write the frame
+        self.video_writer.write(frame)
