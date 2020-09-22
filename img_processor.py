@@ -129,7 +129,7 @@ class ImageProcessor(object):
         return cropped_faces, faces_dimensions
 
 
-    def take_snapshot(self, img, camera_id):  # argument types: String or int
+    def take_snapshot(self, img, camera_id):  # argument types: Mat, String or int
         """
         Takes a snapshot
         """

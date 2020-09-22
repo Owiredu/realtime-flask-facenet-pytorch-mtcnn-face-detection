@@ -168,6 +168,14 @@ videoSelect.onchange = startStreamOnCameraChange;
 //################################################
 
 
+function snackbarFunc(message) {
+  var x = document.getElementById("snackbar");
+  x.textContent = message;
+  x.className = "show";
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+
+
 function resetCheckableFeatures() {
   /**
    * Resets all the checkable features to default
@@ -228,13 +236,14 @@ function takeSnapshot() {
   },
 
   success: function(res) {
-    swal.fire({
-      "title": "", 
-      "text": res.message, 
-      "type": "success",
-      "confirmButtonText": 'OK',
-      "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
-    });
+    snackbarFunc(res.message);
+    // swal.fire({
+    //   "title": "", 
+    //   "text": res.message, 
+    //   "type": "success",
+    //   "confirmButtonText": 'OK',
+    //   "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+    // });
   }
 });
 }
@@ -277,6 +286,7 @@ function saveVideo() {
     },
 
     success: function(res) {
+      snackbarFunc(res.message);
       // swal.fire({
       //   "title": "", 
       //   "text": res.message, 

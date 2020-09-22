@@ -27,61 +27,113 @@
 
 <body>
 
+    <div id="mainSidepanel" class="sidepanel" style="z-index: 11;">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+        <div class="centered-div" style="font-size: xx-large;">☰ Menu</div>
+        <a href="javascript:void(0)" onclick="switchMainTabs(event, 'video')" id="defaultOpen"><i class="fa fa-video-camera"></i>&nbspVideo</a>
+        <a href="javascript:void(0)" onclick="switchMainTabs(event, 'gallery')"><i class="fa fa-picture-o"></i>&nbspGallery</a>
+        <a href="javascript:void(0)" onclick="switchMainTabs(event, 'tagging')"><i class="fa fa-tag"></i>&nbspTag</a>
+        <a href="javascript:void(0)" onclick="switchMainTabs(event, 'registration')"><i class="fa fa-address-card-o"></i>&nbspRegister</a> 
+        <a href="javascript:void(0)" onclick="switchMainTabs(event, 'records')"><i class="fa fa-database"></i>&nbspRecords</a> 
+        <a href="javascript:void(0)" onclick="switchMainTabs(event, 'settings')"><i class="fa fa-cog"></i>&nbspSettings</a>
+    </div>
+
+    <div class="icon-bar">
+        <a href="javascript:void(0)" class="openbtn" onclick="openNav()">☰ Menu</a>
+    </div>
+
     <div class="container">
 
-        <div class="centered-div" style="margin-top: 20px;">
-            <span class="stream_controls_icons"><i onclick="" title="Tag a person" class="btn-primary btn fa fa-tag fa-2x"></i></span>
-            <span class="stream_controls_icons"><i onclick="" title="Register" class="btn-primary btn fa fa-address-card-o fa-2x"></i></span> 
-            <span class="stream_controls_icons"><i onclick="" title="Recognition records" class="btn-primary btn fa fa-database fa-2x"></i></span> 
-            <span class="stream_controls_icons"><i onclick="" title="Settings" class="btn-primary btn fa fa-cog fa-2x"></i></span>
+        <!-- begin:: Video Tab -->
+        <div id="video" class="tabcontent">
+            <div class="card-group container row">
+        
+                <div class="card col-sm-6" style="margin: 20px;">
+                    <div class="card-header">
+                        <h4 class="card-title text-center">INPUT STREAM</h4>
+                    </div>
+        
+                    <video id="videoElement" playsinline autoplay class="w-100 d-block" poster="{{ url_for('static', filename='images/default_img.jpg') }}"></video>
+        
+                    <div class="card-body centered-div">
+                        <!-- <label for="videoSource" class="bg-white border-white">Video source: </label> -->
+                        <div class="select">
+                            <select id="videoSource"></select>
+                        </div>
+                    </div>
+        
+                    <div class="card-footer centered-div">
+                        <!-- <button class="btn btn-primary" onclick="startStream()">Start Camera</button>
+                        <button class="btn btn-primary" onclick="stopStream()">Stop Camera</button> -->
+                        <div class="centered-div">
+                            <span class="stream_controls_icons"><i class="btn-primary btn fa fa-play fa-lg" onclick="startStream()" title="Start camera"></i></span>
+                            <span class="stream_controls_icons"><i class="btn-primary btn fa fa-stop fa-lg" onclick="stopStream()" title="Stop camera"></i></span>
+                            <span class="stream_controls_icons"><i class="btn-primary btn fa fa-camera fa-lg" onclick="takeSnapshot()" title="Take snapshot"></i></span> 
+                            <span class="stream_controls_icons"><i class="btn-primary btn fa fa-floppy-o fa-lg" onclick="saveVideo()" title="Start saving video" id="saveVideoBtn"></i></span>
+                            <span class="stream_controls_icons"><i class="btn-primary btn fa fa-smile-o fa-lg" onclick="facialRecognition()" title="Activate facial recognition"></i></span>
+                            <span class="stream_controls_icons"><i class="btn-primary btn fa fa-wheelchair-alt fa-lg" onclick="motionDetection()" title="Activate motion detection"></i></span> 
+                            <!-- <i class="btn-primary btn fa fa-trash fa-lg" onclick="" title="Delete Stream"></i>  -->
+                        </div>
+                    </div>
+                </div>
+        
+        
+                <div class="card col-sm-6" style="margin: 20px;">
+                    <div class="card-header text-center">
+                        <h4 class="card-title">OUTPUT STREAM</h4>
+                    </div>
+                    
+                    <img id="imageElement" src="{{ url_for('video_feed') }}" class="w-100 d-block">
+                    <canvas id="canvasElement" style="display: none;"></canvas>
+        
+                    <div class="card-body centered-div">
+                        <p id="conn-status"></p>
+                    </div>
+                </div>
+        
+            </div>
         </div>
+        <!-- end:: Video Tab -->
 
-        <div class="card-group container row">
-    
-            <div class="card col-sm-6" style="margin: 20px;">
-                <div class="card-header">
-                    <h4 class="card-title text-center">INPUT STREAM</h4>
-                </div>
-    
-                <video id="videoElement" playsinline autoplay class="w-100 d-block" poster="{{ url_for('static', filename='images/default_img.jpg') }}"></video>
-    
-                <div class="card-body centered-div">
-                    <!-- <label for="videoSource" class="bg-white border-white">Video source: </label> -->
-                    <div class="select">
-                        <select id="videoSource"></select>
-                    </div>
-                </div>
-    
-                <div class="card-footer centered-div">
-                    <!-- <button class="btn btn-primary" onclick="startStream()">Start Camera</button>
-                    <button class="btn btn-primary" onclick="stopStream()">Stop Camera</button> -->
-                    <div class="centered-div">
-                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-play fa-lg" onclick="startStream()" title="Start camera"></i></span>
-                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-stop fa-lg" onclick="stopStream()" title="Stop camera"></i></span>
-                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-camera fa-lg" onclick="takeSnapshot()" title="Take snapshot"></i></span> 
-                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-floppy-o fa-lg" onclick="saveVideo()" title="Start saving video" id="saveVideoBtn"></i></span>
-                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-smile-o fa-lg" onclick="facialRecognition()" title="Activate facial recognition"></i></span>
-                        <span class="stream_controls_icons"><i class="btn-primary btn fa fa-wheelchair-alt fa-lg" onclick="motionDetection()" title="Activate motion detection"></i></span> 
-                        <!-- <i class="btn-primary btn fa fa-trash fa-lg" onclick="" title="Delete Stream"></i>  -->
-                    </div>
-                </div>
-            </div>
-    
-    
-            <div class="card col-sm-6" style="margin: 20px;">
-                <div class="card-header text-center">
-                    <h4 class="card-title">OUTPUT STREAM</h4>
-                </div>
-                
-                <img id="imageElement" src="{{ url_for('video_feed') }}" class="w-100 d-block">
-                <canvas id="canvasElement" style="display: none;"></canvas>
-    
-                <div class="card-body centered-div">
-                    <p id="conn-status"></p>
-                </div>
-            </div>
-    
+
+        <!-- begin:: Gallery Tab -->
+        <div id="gallery" class="tabcontent">
+            <h3>Gallery</h3>
         </div>
+        <!-- end:: Gallery Tab -->
+
+
+        <!-- begin:: Tagging Tab -->
+        <div id="tagging" class="tabcontent">
+            <h3>Tagging</h3>
+        </div>
+        <!-- end:: Tagging Tab -->
+
+
+        <!-- begin:: Registration Tab -->
+        <div id="registration" class="tabcontent">
+            <h3>Registration</h3>
+        </div>
+        <!-- end:: Registration Tab -->
+
+
+        <!-- begin:: Records Tab -->
+        <div id="records" class="tabcontent">
+            <h3>Records</h3>
+        </div>
+        <!-- end:: Records Tab -->
+
+
+        <!-- begin:: Settings Tab -->
+        <div id="settings" class="tabcontent">
+            <h3>Settings</h3>
+        </div>
+        <!-- end:: Settings Tab -->
+
+
+        <!-- Begin Snackbar -->
+        <div id="snackbar"></div>
+        <!-- End Snackbars -->
 
     </div>
 
@@ -103,6 +155,9 @@
     <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
     <script src="{{ url_for('static', filename='js/video-capture.js') }}"></script>
     <!-- <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> -->
+    <script src="{{ url_for('static', filename='js/main-tabs.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tag-person.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/register-person.js') }}"></script>
     <script src="{{ url_for('static', filename='js/adapter-latest.js') }}"></script>
     </script>
 </body>
