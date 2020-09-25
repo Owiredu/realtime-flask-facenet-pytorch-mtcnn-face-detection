@@ -32,7 +32,7 @@ class ImageProcessor(object):
         self.video_writer_active = False
 
 
-    def apply_processing(self, img, camera_id, resize, snapshot=False, save_video=False):
+    def apply_processing(self, img, camera_id, resize, snapshot=False, save_video=False, recognize_faces=False, detect_motion=False):
         """
         Applies all the required processing to the images received from the video stream
         """
@@ -56,23 +56,27 @@ class ImageProcessor(object):
             # resize the image to 320 x 240
             img = cv2.resize(img, self.image_resize_shape)
         # skip frames specified
-        if self.skip_frame_counter == self.num_of_frames_to_skip:
-            # detect the faces
-            faces, dims = self.detect_faces(img)
-            # set the previous face dimensions detected the current one
-            self.prev_dims = dims
-            if dims:
+        if recognize_faces:
+            if self.skip_frame_counter == self.num_of_frames_to_skip:
+                # detect the faces
+                faces, dims = self.detect_faces(img)
+                # set the previous face dimensions detected the current one
+                self.prev_dims = dims
+                if dims:
+                    # draw rectangles around the detected faces
+                    for dim in dims:
+                        self.rectangle(img, dim)
+                # reset the frame skip counter to zero
+                self.skip_frame_counter = 0
+            elif self.prev_dims:
                 # draw rectangles around the detected faces
-                for dim in dims:
+                for dim in self.prev_dims:
                     self.rectangle(img, dim)
-            # reset the frame skip counter to zero
+            # increment the frame skip counter
+            self.skip_frame_counter += 1
+        else:
             self.skip_frame_counter = 0
-        elif self.prev_dims:
-            # draw rectangles around the detected faces
-            for dim in self.prev_dims:
-                self.rectangle(img, dim)
-        # increment the frame skip counter
-        self.skip_frame_counter += 1
+            self.prev_dims = []
         # convert numpy array to a pillow img
         img = self.cv2_img_to_pillow(img)
         return img

@@ -10,6 +10,9 @@ var currentFeedId = "";
 var localMediaStream = {};
 var isStreaming = {};
 
+var allVideoFeedIds = []; // contains all the video ids
+var maxAllowedVideoFeeds = 4;  // specifies the maximum video streams that will allowed in a single session/tab
+
 var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
 
 // socket.on('connect', function() {
@@ -37,7 +40,7 @@ function sendFrame(feedId) {
 
   let videoElement = document.querySelector('#videoElement' + feedId);
   let canvas = document.querySelector("#canvasElement" + feedId);
-  canvas.getContext('2d').drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight, 0, 0, 300, 150);
+  canvas.getContext('2d').drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight, 0, 0, 300, 150); // drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight, 0, 0, 300, 150)
 
   let dataURL = canvas.toDataURL('image/jpeg');
   socket.emit('input_image', [feedId, dataURL]);
@@ -91,7 +94,7 @@ function getStream(stream) {
 }
 
 function handleError(error) {
-  console.log('navigator.MediaDevices.getUserMedia error: ', error.message, error.name);
+  // console.log('navigator.MediaDevices.getUserMedia error: ', error.message, error.name);
 }
 
 function start(feedId) {
@@ -145,9 +148,11 @@ function stopStream(feedId) {
   let videoElement = document.querySelector('#videoElement' + feedId)
   videoElement.pause();
 
-  stream.getTracks().forEach(function(track) {
-    track.stop();
-  });
+  if (window.stream) {
+    window.stream.getTracks().forEach(function(track) {
+      track.stop();
+    });
+  }
 
   localMediaStream[feedId] = null;
   isStreaming[feedId] = false;
@@ -205,14 +210,30 @@ function getNewVideoFeed() {
    * the id of the previous element
    */
   // get number of video feeds
-  let numOfVideoElements = document.querySelectorAll("[id^=video_feed_]").length;
+  let numOfVideoElements = allVideoFeedIds.length;
+  // check if maximum number of video streams has been reached
+  if (numOfVideoElements >= maxAllowedVideoFeeds) {
+      return [];
+  }
+  // get the already taken indices
+  let alreadyTakenFeedIndices = [];
+  for (let i = 0; i < numOfVideoElements; i++) {
+    let id = allVideoFeedIds[i];
+    alreadyTakenFeedIndices.push(parseInt(id[id.length - 1]));
+  }
   // get the new video feed
-  let newVideoFeedCount = numOfVideoElements.toString();
-  let uniqueVideoElementId = getRandomString() + newVideoFeedCount;
+  let newVideoFeedIndex = numOfVideoElements.toString();
+  for (let i = 0; i < maxAllowedVideoFeeds; i++) {
+    if (!alreadyTakenFeedIndices.includes(i)) {
+      newVideoFeedIndex = i.toString();
+      break;
+    }
+  }
+  let uniqueVideoElementId = getRandomString() + newVideoFeedIndex;
   let newVideoElementId = "video_feed_" + uniqueVideoElementId;
   // create the new video feed element
   let newVideoFeedElement = document.createElement("div");
-  // newVideoFeedElement.id = newVideoElementId;
+  newVideoFeedElement.id = newVideoElementId + "_parent";
   let newVideoElementHtml = `<div id="` + newVideoElementId + `" class="card-group container row">
         
                               <div class="card col-sm-6" style="margin: 20px;">
@@ -237,7 +258,7 @@ function getNewVideoFeed() {
                                           <span class="stream_controls_icons"><i class="btn-primary btn fa fa-floppy-o fa-lg" id="saveVideoBtn` + uniqueVideoElementId + `" title="Start saving video"></i></span>
                                           <span class="stream_controls_icons"><i class="btn-primary btn fa fa-smile-o fa-lg" id="facialRecognitionBtn` + uniqueVideoElementId + `" title="Activate facial recognition"></i></span>
                                           <span class="stream_controls_icons"><i class="btn-primary btn fa fa-wheelchair-alt fa-lg" id="motionDetectionBtn` + uniqueVideoElementId + `" title="Activate motion detection"></i></span> 
-                                          <!-- <i class="btn-primary btn fa fa-trash fa-lg" id="" title="Delete Stream"></i>  -->
+                                          <span class="stream_controls_icons"><i class="btn-primary btn fa fa-trash fa-lg" id="deleteVideoBtn` + uniqueVideoElementId + `" title="Delete Stream"></i></span>
                                       </div>
                                   </div>
                               </div>
@@ -248,7 +269,7 @@ function getNewVideoFeed() {
                                       <h4 class="card-title">OUTPUT STREAM</h4>
                                   </div>
                                   
-                                  <img id="imageElement` + uniqueVideoElementId + `" src="/video_feed_` + newVideoFeedCount + `/` + uniqueVideoElementId + `" class="w-100 d-block">
+                                  <img id="imageElement` + uniqueVideoElementId + `" src="/video_feed_` + newVideoFeedIndex + `/` + uniqueVideoElementId + `" class="w-100 d-block">
                                   <canvas id="canvasElement` + uniqueVideoElementId + `" style="display: none;"></canvas>
 
                                   <div class="card-body centered-div">
@@ -264,6 +285,8 @@ function getNewVideoFeed() {
   // update the localMediaStream and isStreaming objects
   localMediaStream[uniqueVideoElementId] = null;
   isStreaming[uniqueVideoElementId] = false;
+  // add id to the video feed ids array
+  allVideoFeedIds.push(uniqueVideoElementId);
   // return the previous video feed element id and the new video feed element
   return [newVideoFeedElement, uniqueVideoElementId];
 }
@@ -274,6 +297,17 @@ function insertNewVideoFeed() {
    * Inserts the new video feed right under the main videos menu
    */
   let newVideoFeedElementData = getNewVideoFeed();
+  if (newVideoFeedElementData.length === 0) {
+    swal.fire({
+      "title": "",
+      "text": "Maximum number of streams (" + maxAllowedVideoFeeds.toString() + ") reached", 
+      "type": "error",
+      "confirmButtonText": 'OK',
+      "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+    });
+
+    return;
+  }
   let newVideoFeedElement = newVideoFeedElementData[0];
   let uniqueVideoElementId = newVideoFeedElementData[1];
   newVideoFeedElement.appendAfter(document.querySelector("#main_video_feed_menu"));
@@ -284,6 +318,42 @@ function insertNewVideoFeed() {
   document.querySelector("#saveVideoBtn" + uniqueVideoElementId).addEventListener("click", function() {saveVideo(uniqueVideoElementId);}, false);
   document.querySelector("#facialRecognitionBtn" + uniqueVideoElementId).addEventListener("click", function() {facialRecognition(uniqueVideoElementId);}, false);
   document.querySelector("#motionDetectionBtn" + uniqueVideoElementId).addEventListener("click", function() {motionDetection(uniqueVideoElementId);}, false);
+  document.querySelector("#deleteVideoBtn" + uniqueVideoElementId).addEventListener("click", function() {removeVideoFeeds([uniqueVideoElementId]);}, false);
+}
+
+
+function removeVideoFeeds(videoFeedIds) {
+  /**
+   * Removes the nodes with their ids specified in the videoFeedIds array
+   */
+  for (let i = 0; i < videoFeedIds.length; i++) {
+    // stop the appropriate video stream
+    stopStream(videoFeedIds[i]);
+    // remove the video feed
+    $("#video_feed_" + videoFeedIds[i] + "_parent").remove();
+    // remove the id from the all ids array
+    let indexToRemove = allVideoFeedIds.indexOf(videoFeedIds[i]);
+    allVideoFeedIds.splice(indexToRemove, 1);
+    // remove the threads of all the deleted feeds
+    removeVideoThreads(videoFeedIds);
+  }
+}
+
+
+function removeAllVideoFeeds() {
+  /**
+   * Removes all the video feeds
+   */
+  for (let i = 0; i < allVideoFeedIds.length; i++) {
+    // stop the appropriate video stream
+    stopStream(allVideoFeedIds[i]);
+    // remove the video feed
+    $("#video_feed_" + allVideoFeedIds[i] + "_parent").remove();
+  }
+  // remove all threads of all the deleted feeds
+  removeVideoThreads(allVideoFeedIds);
+  // empty the all video feed ids array
+  allVideoFeedIds.splice(0, allVideoFeedIds.length);
 }
 
 
@@ -298,22 +368,24 @@ function snackbarFunc(message) {
 }
 
 
-function resetCheckableFeatures() {
+function removeVideoThreads(videoFeedIds) {
   /**
-   * Resets all the checkable features to default
+   * Removes all video processing threads specified in the video feed ids array
    */
   $.ajax({
-    url: "/reset_checkable_features",
+    url: "/remove_threads",
 
-    method: "GET",
+    data: {videoFeedIds: videoFeedIds.join("_")},
+
+    method: "POST",
 
     error: function(res, err) {
-      swal.fire({
-        "title": "",
-        "text": res.responseJSON.message, 
-        "type": "error",
-        "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
-      });
+    //   swal.fire({
+    //     "title": "",
+    //     "text": res.responseJSON.message, 
+    //     "type": "error",
+    //     "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+    //   });
     },
 
     success: function(res) {
@@ -329,9 +401,21 @@ function resetCheckableFeatures() {
 }
 
 
-$(document).ready(function() {
-  // reset all the checkable features when a page loads or reloads
-  resetCheckableFeatures();
+// reset all the checkable features when a page loads or reloads
+$(window).bind("beforeunload", function(e) {
+  e.preventDefault();
+  removeAllVideoFeeds();
+  removeVideoThreads(allVideoFeedIds);
+
+  return;
+});
+
+$(window).on("close", function(e) {
+  e.preventDefault();
+  removeAllVideoFeeds();
+  removeVideoThreads(allVideoFeedIds);
+
+  return;
 });
 
 

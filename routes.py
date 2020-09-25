@@ -1,4 +1,5 @@
 import os
+from flask.globals import request
 from werkzeug import utils
 from img_processor import ImageProcessor
 from flask import render_template, Response, url_for
@@ -17,7 +18,10 @@ def capture_input_image(input):
     """
     feed_id = input[0]
     input = input[1].split(",")[1]
-    cameras_dict[feed_id].enqueue_input(input)
+    try:
+        cameras_dict[feed_id].enqueue_input(input)
+    except:
+        pass
 
 
 @socketio.on('connect', namespace='/capture')
@@ -42,9 +46,12 @@ def gen(feed_id):
     Generates frames to be sent to the client.
     """
     app.logger.info("Starting to generate frames ...")
-    while True:
-        frame = cameras_dict[feed_id].get_frame()
-        yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    try:
+        while True:
+            frame = cameras_dict[feed_id].get_frame()
+            yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    except:
+        pass
 
 
 @app.route('/video_feed_0/<feed_id>')
@@ -87,21 +94,24 @@ def video_feed_3(feed_id):
     return Response(gen(feed_id), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-def set_checkable_features_to_default():
+def remove_aborted_threads(video_feed_ids):
     """
     Sets the checkable features to their default states
     """
-    for feed_id in cameras_dict.keys():
-        cameras_dict[feed_id].save_video = False
+    video_feed_ids = video_feed_ids.split("_")
+    for feed_id in video_feed_ids:
+        if cameras_dict.keys().__contains__(feed_id):
+            cameras_dict.pop(feed_id)
 
 
-@app.route('/reset_checkable_features', methods=['GET'])
-def reset_checkable_features():
+@app.route('/remove_threads', methods=['POST'])
+def remove_threads():
     """
     Sets the checkable features to their default states
     """
     try:
-        set_checkable_features_to_default()
+        video_feed_ids = request.form["videoFeedIds"]
+        remove_aborted_threads(video_feed_ids)
         return Response(json.dumps({'message': 'Checkable items set to default successfully'}), status=200, mimetype='application/json')
     except:
         return Response(json.dumps({'message': 'Failed to set checkable items to default'}), status=400, mimetype='application/json')
