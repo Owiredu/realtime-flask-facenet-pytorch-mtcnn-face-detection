@@ -8,7 +8,8 @@ from utils import base64_to_pil_image, pil_image_to_base64
 
 class Camera(object):
 
-    def __init__(self, img_processor):
+    def __init__(self, img_processor, feed_index):
+        self.camera_id = str(feed_index)
         self.frame_tracker = 0  # track number of frames that have not been received.
         self.is_first_frame_display = False  # track if default image is displayed
         self.snapshot = False  # notify if snapshot should be saved
@@ -43,9 +44,9 @@ class Camera(object):
          # output_img is an PIL image
          # do not resize default image
         if self.is_first_frame_display:
-            output_img = self.img_processor.apply_processing(input_img, resize=False)
+            output_img = self.img_processor.apply_processing(input_img, camera_id=self.camera_id, resize=False)
         else:
-            output_img = self.img_processor.apply_processing(input_img, resize=True, snapshot=self.snapshot, save_video=self.save_video)
+            output_img = self.img_processor.apply_processing(input_img, camera_id=self.camera_id, resize=True, snapshot=self.snapshot, save_video=self.save_video)
             # reset snapshot to false
             self.snapshot = False
         # output_str is a base64 string in ascii

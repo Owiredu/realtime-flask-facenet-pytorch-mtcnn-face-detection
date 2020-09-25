@@ -7,7 +7,7 @@ from app import app, socketio, mail, db
 import json
 
 
-camera = Camera(ImageProcessor())
+cameras_dict = dict()
 
 
 @socketio.on('input_image', namespace='/capture')
@@ -15,8 +15,9 @@ def capture_input_image(input):
     """
     Gets the input frame and adds it to a queue
     """
-    input = input.split(",")[1]
-    camera.enqueue_input(input)
+    feed_id = input[0]
+    input = input[1].split(",")[1]
+    cameras_dict[feed_id].enqueue_input(input)
 
 
 @socketio.on('connect', namespace='/capture')
@@ -35,30 +36,63 @@ def index():
     return render_template('face-detection.html')
 
 
-def gen():
+def gen(feed_id):
     """
     Video streaming generator function. 
     Generates frames to be sent to the client.
     """
     app.logger.info("Starting to generate frames ...")
     while True:
-        frame = camera.get_frame()
+        frame = cameras_dict[feed_id].get_frame()
         yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
-@app.route('/video_feed')
-def video_feed():
+@app.route('/video_feed_0/<feed_id>')
+def video_feed_0(feed_id):
     """
     Video streaming route. Put this in the src attribute of an img tag.
     """
-    return Response(gen(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if not cameras_dict.keys().__contains__(feed_id):
+        cameras_dict[feed_id] = Camera(ImageProcessor(), feed_id)
+    return Response(gen(feed_id), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/video_feed_1/<feed_id>')
+def video_feed_1(feed_id):
+    """
+    Video streaming route. Put this in the src attribute of an img tag.
+    """
+    if not cameras_dict.keys().__contains__(feed_id):
+        cameras_dict[feed_id] = Camera(ImageProcessor(), feed_id)
+    return Response(gen(feed_id), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/video_feed_2/<feed_id>')
+def video_feed_2(feed_id):
+    """
+    Video streaming route. Put this in the src attribute of an img tag.
+    """
+    if not cameras_dict.keys().__contains__(feed_id):
+        cameras_dict[feed_id] = Camera(ImageProcessor(), feed_id)
+    return Response(gen(feed_id), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/video_feed_3/<feed_id>')
+def video_feed_3(feed_id):
+    """
+    Video streaming route. Put this in the src attribute of an img tag.
+    """
+    if not cameras_dict.keys().__contains__(feed_id):
+        cameras_dict[feed_id] = Camera(ImageProcessor(), feed_id)
+    return Response(gen(feed_id), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 def set_checkable_features_to_default():
     """
     Sets the checkable features to their default states
     """
-    camera.save_video = False
+    for feed_id in cameras_dict.keys():
+        cameras_dict[feed_id].save_video = False
 
 
 @app.route('/reset_checkable_features', methods=['GET'])
@@ -73,44 +107,45 @@ def reset_checkable_features():
         return Response(json.dumps({'message': 'Failed to set checkable items to default'}), status=400, mimetype='application/json')
 
 
-def save_snapshot():
+def save_snapshot(feed_id):
     """
     Saves a the current frame
     """
     app.logger.info("Saving snapshot ...")
-    camera.snapshot = True
+    cameras_dict[feed_id].snapshot = True
 
 
-@app.route('/take_snapshot', methods=['POST'])
-def take_snapshot():
+@app.route('/take_snapshot/<feed_id>', methods=['POST'])
+def take_snapshot(feed_id):
     """
     Saves a the current frame
     """
     try:
-        save_snapshot()
+        save_snapshot(feed_id)
         return Response(json.dumps({'message': 'Snapshot taken successfully'}), status=200, mimetype='application/json')
     except:
         return Response(json.dumps({'message': 'Failed to take snapshot'}), status=400, mimetype='application/json')
 
 
-def save_video_stream(status):
+def save_video_stream(status, feed_id):
     """
     Activates video saving
     """
     app.logger.info("Saving video ...")
     if int(status) == 0:
-        camera.save_video = False
+        cameras_dict[feed_id].save_video = False
     else:
-        camera.save_video = True
+        cameras_dict[feed_id].save_video = True
 
 
-@app.route('/save_video/<status>', methods=['POST'])
-def save_video(status):
+@app.route('/save_video/<status_and_feed_id>', methods=['POST'])
+def save_video(status_and_feed_id):
     """
     Activates video saving
     """
     try:
-        save_video_stream(status)
+        status, feed_id = status_and_feed_id.split("_")
+        save_video_stream(int(status), feed_id)
         return Response(json.dumps({'message': 'Video saving status has been switched.'}), status=200, mimetype='application/json')
     except:
         return Response(json.dumps({'message': 'Failed to start video saving'}), status=400, mimetype='application/json')

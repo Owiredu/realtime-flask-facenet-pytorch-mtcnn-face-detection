@@ -32,7 +32,7 @@ class ImageProcessor(object):
         self.video_writer_active = False
 
 
-    def apply_processing(self, img, resize, snapshot=False, save_video=False):
+    def apply_processing(self, img, camera_id, resize, snapshot=False, save_video=False):
         """
         Applies all the required processing to the images received from the video stream
         """
@@ -40,11 +40,11 @@ class ImageProcessor(object):
         img = self.pillow_to_cv2_img(img)
         # save the image if the snapshot is true
         if snapshot:
-            self.take_snapshot(img, 'cam_id')
+            self.take_snapshot(img, camera_id)
         # save the video if the save video is turned on
         if save_video:
             if not self.video_writer_active:
-                self.activate_vid_saving_to_disk('cam_id')
+                self.activate_vid_saving_to_disk(camera_id)
                 self.video_writer_active = True
             self.save_video_stream_to_file(img)
         else: 

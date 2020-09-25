@@ -3,15 +3,12 @@
 //# THIS INCLUDES PAUSING AND PLAYING THE VIDEO STREAM, SELECTING AND SWITCHING CAMERAS.                              #
 //#####################################################################################################################
 
-let namespace = "/capture";
-let videoElement = document.querySelector('#videoElement');
-let videoSelect = document.querySelector('select#videoSource');
-let selectors = [videoSelect];
-let canvas = document.querySelector("#canvasElement");
-let ctx = canvas.getContext('2d');
 
-var localMediaStream = null;
-var isStreaming = false;
+let namespace = "/capture";
+var currentFeedId = "";
+
+var localMediaStream = {};
+var isStreaming = {};
 
 var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
 
@@ -30,18 +27,20 @@ function init() {
   // });
 }
 
-function sendFrame() {
+function sendFrame(feedId) {
   /**
    * Sends a captured frame to the server
    */
-  if (!localMediaStream && !isStreaming) {
+  if (!localMediaStream[feedId] && !isStreaming[feedId]) {
     return;
   }
 
-  ctx.drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight, 0, 0, 300, 150);
+  let videoElement = document.querySelector('#videoElement' + feedId);
+  let canvas = document.querySelector("#canvasElement" + feedId);
+  canvas.getContext('2d').drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight, 0, 0, 300, 150);
 
   let dataURL = canvas.toDataURL('image/jpeg');
-  socket.emit('input_image', dataURL);
+  socket.emit('input_image', [feedId, dataURL]);
 }
 
 function getDevices(deviceInfos) {
@@ -49,8 +48,8 @@ function getDevices(deviceInfos) {
    * Gets all the connected video devices
    */
   // Handles being called several times to update labels. Preserve values.
-  const values = selectors.map(select => select.value);
-  selectors.forEach(select => {
+  const values = [document.querySelector('select#videoSource' + currentFeedId)].map(select => select.value);
+  [document.querySelector('select#videoSource' + currentFeedId)].forEach(select => {
     while (select.firstChild) {
       select.removeChild(select.firstChild);
     }
@@ -60,14 +59,14 @@ function getDevices(deviceInfos) {
     const option = document.createElement('option');
     option.value = deviceInfo.deviceId;
     if (deviceInfo.kind === 'videoinput') {
-      option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
-      videoSelect.appendChild(option);
-    } 
+      option.text = deviceInfo.label || `camera ${document.querySelector('select#videoSource' + currentFeedId).length + 1}`;
+      document.querySelector('select#videoSource' + currentFeedId).appendChild(option);
+    }
     // else {
     //   console.log('Some other kind of source/device: ', deviceInfo);
     // }
   }
-  selectors.forEach((select, selectorIndex) => {
+  [document.querySelector('select#videoSource' + currentFeedId)].forEach((select, selectorIndex) => {
     if (Array.prototype.slice.call(select.childNodes).some(n => n.value === values[selectorIndex])) {
       select.value = values[selectorIndex];
     }
@@ -82,11 +81,11 @@ function getStream(stream) {
    * Also refreshes the devices in the select widget.
    */
   window.stream = stream; // make stream available to console
-  videoElement.srcObject = stream;
+  document.querySelector('#videoElement' + currentFeedId).srcObject = stream;
 
-  localMediaStream = stream;
+  localMediaStream[currentFeedId] = stream;
 
-  setInterval(function () { sendFrame(); }, 50);
+  setInterval(function () { sendFrame(currentFeedId); }, 50);
   // Refresh button list in case labels have become available
   return navigator.mediaDevices.enumerateDevices();
 }
@@ -95,18 +94,19 @@ function handleError(error) {
   console.log('navigator.MediaDevices.getUserMedia error: ', error.message, error.name);
 }
 
-function start() {
+function start(feedId) {
   /**
    * Setup the media device and the video parameters, stop the any streams that are running
    * and begin streaming
    */
+  currentFeedId = feedId;
   init();
   if (window.stream) {
     window.stream.getTracks().forEach(track => {
       track.stop();
     });
   }
-  const videoSource = videoSelect.value;
+  const videoSource = document.querySelector('select#videoSource' + feedId).value;
   const constraints = {
     video: {
       deviceId: videoSource ? {exact: videoSource} : undefined,
@@ -115,38 +115,42 @@ function start() {
   navigator.mediaDevices.getUserMedia(constraints).then(getStream).then(getDevices).catch(handleError);
 }
 
-function startStream() {
+function startStream(feedId) {
   /**
    * Starts streaming video from the selected source
    */
+  currentFeedId = feedId;
+  let videoElement = document.querySelector('#videoElement' + feedId);
   videoElement.setAttribute('poster', "");
   videoElement.load();
   videoElement.play();
-  start();
+  start(feedId);
   isStreaming = true;
 }
 
-function startStreamOnCameraChange() {
+function startStreamOnCameraChange(feedId) {
   /**
    * Start streaming a video when the camera is changed
    */
   if (isStreaming) {
-    startStream();
+    startStream(feedId);
   }
 }
 
-function stopStream() {
+function stopStream(feedId) {
   /**
    * Stops streaming the video
    */
+  currentFeedId = feedId;
+  let videoElement = document.querySelector('#videoElement' + feedId)
   videoElement.pause();
 
   stream.getTracks().forEach(function(track) {
     track.stop();
   });
 
-  localMediaStream = null;
-  isStreaming = false;
+  localMediaStream[feedId] = null;
+  isStreaming[feedId] = false;
 
   videoElement.setAttribute('poster', "/static/images/default_img.jpg");
   videoElement.load();
@@ -160,15 +164,133 @@ function closeSocket() {
 }
 
 // automatically start new camera after selecting it
-videoSelect.onchange = startStreamOnCameraChange;
+// document.querySelector('select#videoSource').onchange = startStreamOnCameraChange;
 
 
 //################################################
-//# THIS SECTION HANDLES HANDLES OTHER FUNCTIONS #
+//# THIS SECTION HANDLES OTHER FUNCTIONS         #
 //################################################
+
+
+/* Adds Element BEFORE NeighborElement */
+Element.prototype.appendBefore = function (element) {
+  element.parentNode.insertBefore(this, element);
+}, false;
+
+/* Adds Element AFTER NeighborElement */
+Element.prototype.appendAfter = function (element) {
+  element.parentNode.insertBefore(this, element.nextSibling);
+}, false;
+
+
+function getRandomString() {
+  /**
+   * Returns a random string of length 7 to be appended to the feed index.
+   * This is to ensure that the feed is always unique.
+   */
+  let length = 20;
+  let result = "";
+  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  let charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+
+function getNewVideoFeed() {
+  /**
+   * Creates a new video feed element and returns the new element along with 
+   * the id of the previous element
+   */
+  // get number of video feeds
+  let numOfVideoElements = document.querySelectorAll("[id^=video_feed_]").length;
+  // get the new video feed
+  let newVideoFeedCount = numOfVideoElements.toString();
+  let uniqueVideoElementId = getRandomString() + newVideoFeedCount;
+  let newVideoElementId = "video_feed_" + uniqueVideoElementId;
+  // create the new video feed element
+  let newVideoFeedElement = document.createElement("div");
+  // newVideoFeedElement.id = newVideoElementId;
+  let newVideoElementHtml = `<div id="` + newVideoElementId + `" class="card-group container row">
+        
+                              <div class="card col-sm-6" style="margin: 20px;">
+                                  <div class="card-header">
+                                      <h4 class="card-title text-center">INPUT STREAM</h4>
+                                  </div>
+
+                                  <video id="videoElement` + uniqueVideoElementId + `" playsinline autoplay class="w-100 d-block" poster="/static/images/default_img.jpg"></video>
+
+                                  <div class="card-body centered-div">
+                                      <!-- <label for="videoSource` + uniqueVideoElementId + `" class="bg-white border-white">Video source: </label> -->
+                                      <div class="select">
+                                          <select id="videoSource` + uniqueVideoElementId + `"></select>
+                                      </div>
+                                  </div>
+
+                                  <div class="card-footer centered-div">
+                                      <div class="centered-div">
+                                          <span class="stream_controls_icons"><i class="btn-primary btn fa fa-play fa-lg" id="startVideoBtn` + uniqueVideoElementId + `" title="Start camera"></i></span>
+                                          <span class="stream_controls_icons"><i class="btn-primary btn fa fa-stop fa-lg" id="stopVideoBtn` + uniqueVideoElementId + `" title="Stop camera"></i></span>
+                                          <span class="stream_controls_icons"><i class="btn-primary btn fa fa-camera fa-lg" id="takeSnapshotBtn` + uniqueVideoElementId + `" title="Take snapshot"></i></span> 
+                                          <span class="stream_controls_icons"><i class="btn-primary btn fa fa-floppy-o fa-lg" id="saveVideoBtn` + uniqueVideoElementId + `" title="Start saving video"></i></span>
+                                          <span class="stream_controls_icons"><i class="btn-primary btn fa fa-smile-o fa-lg" id="facialRecognitionBtn` + uniqueVideoElementId + `" title="Activate facial recognition"></i></span>
+                                          <span class="stream_controls_icons"><i class="btn-primary btn fa fa-wheelchair-alt fa-lg" id="motionDetectionBtn` + uniqueVideoElementId + `" title="Activate motion detection"></i></span> 
+                                          <!-- <i class="btn-primary btn fa fa-trash fa-lg" id="" title="Delete Stream"></i>  -->
+                                      </div>
+                                  </div>
+                              </div>
+
+
+                              <div class="card col-sm-6" style="margin: 20px;">
+                                  <div class="card-header text-center">
+                                      <h4 class="card-title">OUTPUT STREAM</h4>
+                                  </div>
+                                  
+                                  <img id="imageElement` + uniqueVideoElementId + `" src="/video_feed_` + newVideoFeedCount + `/` + uniqueVideoElementId + `" class="w-100 d-block">
+                                  <canvas id="canvasElement` + uniqueVideoElementId + `" style="display: none;"></canvas>
+
+                                  <div class="card-body centered-div">
+                                      <p id="conn-status-` + uniqueVideoElementId + `"></p>
+                                  </div>
+                              </div>
+
+                            </div>`;
+  newVideoFeedElement.innerHTML = newVideoElementHtml;
+  // load the devices connected
+  currentFeedId = uniqueVideoElementId;
+  navigator.mediaDevices.enumerateDevices().then(getDevices).catch(handleError);
+  // update the localMediaStream and isStreaming objects
+  localMediaStream[uniqueVideoElementId] = null;
+  isStreaming[uniqueVideoElementId] = false;
+  // return the previous video feed element id and the new video feed element
+  return [newVideoFeedElement, uniqueVideoElementId];
+}
+
+
+function insertNewVideoFeed() {
+  /**
+   * Inserts the new video feed right under the main videos menu
+   */
+  let newVideoFeedElementData = getNewVideoFeed();
+  let newVideoFeedElement = newVideoFeedElementData[0];
+  let uniqueVideoElementId = newVideoFeedElementData[1];
+  newVideoFeedElement.appendAfter(document.querySelector("#main_video_feed_menu"));
+  // add event listeners to the buttons of the video stream
+  document.querySelector("#startVideoBtn" + uniqueVideoElementId).addEventListener("click", function() {startStream(uniqueVideoElementId);}, false);
+  document.querySelector("#stopVideoBtn" + uniqueVideoElementId).addEventListener("click", function() {stopStream(uniqueVideoElementId);}, false);
+  document.querySelector("#takeSnapshotBtn" + uniqueVideoElementId).addEventListener("click", function() {takeSnapshot(uniqueVideoElementId);}, false);
+  document.querySelector("#saveVideoBtn" + uniqueVideoElementId).addEventListener("click", function() {saveVideo(uniqueVideoElementId);}, false);
+  document.querySelector("#facialRecognitionBtn" + uniqueVideoElementId).addEventListener("click", function() {facialRecognition(uniqueVideoElementId);}, false);
+  document.querySelector("#motionDetectionBtn" + uniqueVideoElementId).addEventListener("click", function() {motionDetection(uniqueVideoElementId);}, false);
+}
 
 
 function snackbarFunc(message) {
+  /**
+   * Displays snackbar with message
+   */
   var x = document.getElementById("snackbar");
   x.textContent = message;
   x.className = "show";
@@ -213,16 +335,17 @@ $(document).ready(function() {
 });
 
 
-function takeSnapshot() {
+function takeSnapshot(feedId) {
+  currentFeedId = feedId;
   /**
    * Saves the current frame that has been captured
    */
-  if (!localMediaStream && !isStreaming) {
+  if (!localMediaStream[feedId] && !isStreaming[feedId]) {
     return;
   }
 
   $.ajax({
-  url: "/take_snapshot",
+  url: "/take_snapshot/" + feedId,
 
   method: "POST",
 
@@ -249,16 +372,17 @@ function takeSnapshot() {
 }
 
 
-function saveVideo() {
+function saveVideo(feedId) {
   /**
    * Activates video saving so that the server saves the video being captured
    */
-  if (!localMediaStream && !isStreaming) {
+  currentFeedId = feedId;
+  if (!localMediaStream[feedId] && !isStreaming) {
     return;
   }
 
   let saveStatus = "0";
-  saveVideoBtn = document.querySelector("#saveVideoBtn");
+  saveVideoBtn = document.querySelector("#saveVideoBtn" + feedId);
   let class_attr = saveVideoBtn.getAttribute("class");
 
   if (class_attr.includes("btn-primary")) {
@@ -272,7 +396,7 @@ function saveVideo() {
   }
 
   $.ajax({
-    url: "/save_video/" + saveStatus,
+    url: "/save_video/" + saveStatus + "_" + feedId,
 
     method: "POST",
 
@@ -298,10 +422,11 @@ function saveVideo() {
   });
 }
 
-function facialRecognition() {
+function facialRecognition(feedId) {
   /**
    * Activates facial recognition
    */
+  currentFeedId = feedId;
   swal.fire({
     "title": "",
     "text": "Facial recognition", 
@@ -312,10 +437,11 @@ function facialRecognition() {
 }
 
 
-function motionDetection() {
+function motionDetection(feedId) {
   /**
    * Activates motion detection
    */
+  currentFeedId = feedId;
   swal.fire({
     "title": "",
     "text": "Motion detection", 

@@ -1,4 +1,13 @@
-function switchMainTabs(evt, tabName) {
+var tabIdTileObj = {
+  video: "Video Surveillance",
+  gallery: "Gallery",
+  tagging: "Tag a Person",
+  registration: "Registration",
+  records: "Records",
+  settings: "Settings"
+};
+
+function switchMainTabs(evt, tabId) {
     /**
      * Switches between the main page tabs and closes the menu
      */
@@ -11,9 +20,10 @@ function switchMainTabs(evt, tabName) {
     for (i = 0; i < tablinks.length; i++) {
       tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
-    document.getElementById(tabName).style.display = "block";
+    document.getElementById(tabId).style.display = "block";
     evt.currentTarget.className += " active";
 
+    document.querySelector("#main_tabs_title").textContent = tabIdTileObj[tabId];
     closeNav();
 }
 
