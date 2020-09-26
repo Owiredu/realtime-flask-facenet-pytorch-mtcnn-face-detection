@@ -554,9 +554,39 @@ function facialRecognition(feedId) {
 }
 
 
+function allFacialRecognition() {
+  /**
+   * Activates facial recognition for all the video sources
+   */
+  currentFeedId = feedId;
+  swal.fire({
+    "title": "",
+    "text": "Facial recognition", 
+    "type": "success",
+    "confirmButtonText": 'OK',
+    "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+  });
+}
+
+
 function motionDetection(feedId) {
   /**
    * Activates motion detection
+   */
+  currentFeedId = feedId;
+  swal.fire({
+    "title": "",
+    "text": "Motion detection", 
+    "type": "success",
+    "confirmButtonText": 'OK',
+    "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+  });
+}
+
+
+function allMotionDetection() {
+  /**
+   * Activates motion detection for all the video sources
    */
   currentFeedId = feedId;
   swal.fire({
