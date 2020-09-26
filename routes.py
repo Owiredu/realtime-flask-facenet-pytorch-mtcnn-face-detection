@@ -156,6 +156,6 @@ def save_video(status_and_feed_id):
     try:
         status, feed_id = status_and_feed_id.split("_")
         save_video_stream(int(status), feed_id)
-        return Response(json.dumps({'message': 'Video saving status has been switched.'}), status=200, mimetype='application/json')
+        return Response(json.dumps({'message': 'Video saving status has been turned ' + ('OFF' if status == "0" else 'ON') }), status=200, mimetype='application/json')
     except:
         return Response(json.dumps({'message': 'Failed to start video saving'}), status=400, mimetype='application/json')

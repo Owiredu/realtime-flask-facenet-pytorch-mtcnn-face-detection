@@ -131,6 +131,19 @@ function startStream(feedId) {
   isStreaming = true;
 }
 
+function startAllStreams() {
+  /**
+   * Starts streaming video from all the video sources
+   */
+  for (let i = 0; i < allVideoFeedIds.length; i++) {
+    if (i === 0) {
+      startStream(allVideoFeedIds[i]);
+      continue;
+    }
+    setTimeout(function() {startStream(allVideoFeedIds[i])}, 100);
+  }
+}
+
 function startStreamOnCameraChange(feedId) {
   /**
    * Start streaming a video when the camera is changed
@@ -159,6 +172,19 @@ function stopStream(feedId) {
 
   videoElement.setAttribute('poster', "/static/images/default_img.jpg");
   videoElement.load();
+}
+
+function stopAllStreams() {
+  /**
+   * Starts streaming video from all the video sources
+   */
+  for (let i = 0; i < allVideoFeedIds.length; i++) {
+    if (i === 0) {
+      stopStream(allVideoFeedIds[i]);
+      continue;
+    }
+    setTimeout(function() {stopStream(allVideoFeedIds[i])}, 100);
+  }
 }
 
 function closeSocket() {
@@ -444,15 +470,18 @@ function takeSnapshot(feedId) {
 
   success: function(res) {
     snackbarFunc(res.message);
-    // swal.fire({
-    //   "title": "", 
-    //   "text": res.message, 
-    //   "type": "success",
-    //   "confirmButtonText": 'OK',
-    //   "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
-    // });
+    }
+  });
+}
+
+
+function takeAllSnapshots() {
+  /**
+   * Saves the current frame that has been captured from all the video sources
+   */
+  for (let i = 0; i < allVideoFeedIds.length; i++) {
+    takeSnapshot(allVideoFeedIds[i]);
   }
-});
 }
 
 
@@ -495,16 +524,20 @@ function saveVideo(feedId) {
 
     success: function(res) {
       snackbarFunc(res.message);
-      // swal.fire({
-      //   "title": "", 
-      //   "text": res.message, 
-      //   "type": "success",
-      //   "confirmButtonText": 'OK',
-      //   "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
-      // });
     }
   });
 }
+
+
+function saveAllVideos() {
+  /**
+   * Activates video saving so that the server saves the video being captured from all the video sources
+   */
+  for (let i = 0; i < allVideoFeedIds.length; i++) {
+    saveVideo(allVideoFeedIds[i]);
+  }
+}
+
 
 function facialRecognition(feedId) {
   /**
