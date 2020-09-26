@@ -558,7 +558,6 @@ function allFacialRecognition() {
   /**
    * Activates facial recognition for all the video sources
    */
-  currentFeedId = feedId;
   swal.fire({
     "title": "",
     "text": "Facial recognition", 
@@ -588,7 +587,6 @@ function allMotionDetection() {
   /**
    * Activates motion detection for all the video sources
    */
-  currentFeedId = feedId;
   swal.fire({
     "title": "",
     "text": "Motion detection", 
