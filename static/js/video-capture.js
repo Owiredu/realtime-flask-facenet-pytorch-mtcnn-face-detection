@@ -313,6 +313,8 @@ function getNewVideoFeed() {
   isStreaming[uniqueVideoElementId] = false;
   // add id to the video feed ids array
   allVideoFeedIds.push(uniqueVideoElementId);
+  // toggle no camera element
+  toggleNoCameraEl();
   // return the previous video feed element id and the new video feed element
   return [newVideoFeedElement, uniqueVideoElementId];
 }
@@ -362,6 +364,8 @@ function removeVideoFeeds(videoFeedIds) {
     allVideoFeedIds.splice(indexToRemove, 1);
     // remove the threads of all the deleted feeds
     removeVideoThreads(videoFeedIds);
+    // toggle no camera element
+    toggleNoCameraEl();
   }
 }
 
@@ -380,6 +384,20 @@ function removeAllVideoFeeds() {
   removeVideoThreads(allVideoFeedIds);
   // empty the all video feed ids array
   allVideoFeedIds.splice(0, allVideoFeedIds.length);
+  // toggle no camera element
+  toggleNoCameraEl();
+}
+
+
+function toggleNoCameraEl() {
+  /**
+   * Hides and shows the no camera element
+   */
+  if (allVideoFeedIds.length === 0) {
+    document.querySelector("#no_video_div").hidden = false;
+  } else {
+    document.querySelector("#no_video_div").hidden = true;
+  }
 }
 
 
