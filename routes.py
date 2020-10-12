@@ -158,4 +158,28 @@ def save_video(status_and_feed_id):
         save_video_stream(int(status), feed_id)
         return Response(json.dumps({'message': 'Video saving status has been turned ' + ('OFF' if status == "0" else 'ON') }), status=200, mimetype='application/json')
     except:
-        return Response(json.dumps({'message': 'Failed to start video saving'}), status=400, mimetype='application/json')
+        return Response(json.dumps({'message': 'Failed to toggle video saving'}), status=400, mimetype='application/json')
+
+
+def motion_detection_stream(status, feed_id):
+    """
+    Activates motion detection
+    """
+    app.logger.info("Motion detection ...")
+    if int(status) == 0:
+        cameras_dict[feed_id].motion_detection = False
+    else:
+        cameras_dict[feed_id].motion_detection = True
+
+
+@app.route('/motion_detection/<status_and_feed_id>', methods=['POST'])
+def motion_detection(status_and_feed_id):
+    """
+    Activates motion detection
+    """
+    try:
+        status, feed_id = status_and_feed_id.split("_")
+        motion_detection_stream(int(status), feed_id)
+        return Response(json.dumps({'message': 'Motion detection has been turned ' + ('OFF' if status == "0" else 'ON') }), status=200, mimetype='application/json')
+    except:
+        return Response(json.dumps({'message': 'Failed to toggle motion detection'}), status=400, mimetype='application/json')

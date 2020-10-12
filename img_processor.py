@@ -15,6 +15,15 @@ class ImageProcessor(object):
         # instantiate the face detector
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.detector = MTCNN(keep_all=True, device=self.device)
+        # set default values for settings values in case there is error loading the settings
+        self.face_recog_conf_thresh = 70
+        self.face_recog_sleep_duration = 1
+        self.motion_sensitivity = 20
+        self.motion_alarm_duration = 2
+        self.motion_extra_recording = 1
+        self.motion_email_notification = False
+        self.motion_email_addresses = ''
+        self.motion_email_sleep_duration = 1
         # count frames to skip as specified
         self.skip_frame_counter = 0
         # hold the previous detected face dimensions
@@ -30,9 +39,20 @@ class ImageProcessor(object):
         # monitor the recording stream so that whenever it is stopped and started, the next one has a different filename
         self.is_file_named = False
         self.video_writer_active = False
+        # motion detection variables
+        self.prev_frame = None
+        self.cur_frame = None
+        self.next_frame = None
+        self.motion_frames_tracker = 0
+        # initialize the video writer for motion detector
+        self.motion_detection_writer_fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        self.motion_detection_writer = cv2.VideoWriter()
+        self.is_motion_recording_named = False
+        self.save_motion_detection = False
+        self.prev_recording_time = 0.0
 
 
-    def apply_processing(self, img, camera_id, resize, snapshot=False, save_video=False, recognize_faces=False, detect_motion=False):
+    def apply_processing(self, img, camera_id, resize, snapshot=False, save_video=False, facial_recognition=False, motion_detection=False):
         """
         Applies all the required processing to the images received from the video stream
         """
@@ -55,8 +75,40 @@ class ImageProcessor(object):
         if resize:
             # resize the image to 320 x 240
             img = cv2.resize(img, self.image_resize_shape)
+        # detection motion
+        if motion_detection:
+            # get first frame
+            if self.motion_frames_tracker == 0:
+                self.prev_frame = self.convertToGRAY(img)
+                self.motion_frames_tracker += 1
+            # get next frame
+            elif self.motion_frames_tracker == 1:
+                self.cur_frame = self.convertToGRAY(img)
+                self.motion_frames_tracker += 1
+            # get the following frame
+            elif self.motion_frames_tracker == 2:
+                self.next_frame = self.convertToGRAY(img)
+                self.motion_frames_tracker += 1
+            # detect motion for the first three frames upon activation
+            elif self.motion_frames_tracker == 3:
+                self.detect_motion(camera_id)
+                self.motion_frames_tracker += 1
+            # replace the frames and detect motion
+            else:
+                self.prev_frame = self.cur_frame
+                self.cur_frame = self.next_frame
+                self.next_frame = self.convertToGRAY(img)
+                self.detect_motion(camera_id)
+            # save motion detection scene
+            # write the colored frame
+            frame_to_record = img.copy()
+            self.record_motion_detection(frame_to_record)
+        else:
+            # if motion detection is off, stop playing sound
+            # pygame.mixer.music.stop()
+            pass
         # skip frames specified
-        if recognize_faces:
+        if facial_recognition:
             if self.skip_frame_counter == self.num_of_frames_to_skip:
                 # detect the faces
                 faces, dims = self.detect_faces(img)
@@ -102,6 +154,20 @@ class ImageProcessor(object):
         # convert a RGB numpy array to a pillow image
         img = Image.fromarray(img)
         return img
+
+
+    def convertToRGB(self, img):  # argument types: Mat
+        """
+        This method converts bgr image to rgb
+        """
+        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+
+    def convertToGRAY(self, img):  # argument types: Mat
+        """
+        This method converts bgr image to grayscale
+        """
+        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 
     def rectangle(self, img, rect):  # argument types: Mat, list
@@ -170,3 +236,68 @@ class ImageProcessor(object):
             self.is_file_named = False
         # write the frame
         self.video_writer.write(frame)
+
+
+    def detect_motion(self, camera_id):
+        """
+        This method detects motion and records the scene
+        """
+        # get frame for recording
+        rec_frame = self.cur_frame.copy()
+        # set frames to same size
+        self.next_frame = cv2.resize(self.next_frame, (200, 200))
+        self.cur_frame = cv2.resize(self.cur_frame, (200, 200))
+        self.prev_frame = cv2.resize(self.prev_frame, (200, 200))
+        # get the differences between the frames and use bitwise and operator to get the resolved differences
+        # between three successive frames
+        next_cur_diff = cv2.absdiff(self.next_frame, self.cur_frame)
+        cur_prev_diff = cv2.absdiff(self.cur_frame, self.prev_frame)
+        resolve_diff = cv2.bitwise_and(next_cur_diff, cur_prev_diff)
+        # get the difference count and use to detect motion
+        if (resolve_diff > 100 - self.motion_sensitivity).sum() > 50:
+            # play motion detection sound
+            # pygame.mixer.music.play(loops=int(60*self.motion_alarm_duration))
+            # send motion email
+            # if self.motion_email_notification:
+            #     motion_email_time = time.time()
+            #     if (motion_email_time - self.prev_motion_email_time) > 60 * self.motion_email_sleep_duration:
+            #         self.prev_motion_email_time = motion_email_time
+            #         motion_det_time = time.asctime()
+            #         self.motion_email.set_motion_info(self.camera_id_for_db, motion_det_time, self.motion_email_addresses)
+            #         self.motion_email.start()
+            # start recording scene
+            self.activate_motion_detection_recording(camera_id)
+
+
+    def activate_motion_detection_recording(self, camera_id):
+        """
+        This method starts saving the motion detection scene to the local drive
+        """
+        # get current time, extract the date from and create the folder if it does not exist. Name the video with the time value
+        time_taken = time.time()
+        if (time_taken - self.prev_recording_time) >= 60 * self.motion_extra_recording:
+            self.prev_recording_time = time_taken
+            current_date = time.strftime('%Y-%m-%d', time.localtime(int(time_taken)))
+            # only record in a separate video file when the interval between the different detections is larger set amount of time
+            self.motion_detection_writer.release()
+            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'motion_detection', current_date), exist_ok=True)
+            self.motion_recording_path = os.path.join(app.config['UPLOAD_FOLDER'], 'motion_detection', current_date, str(camera_id) + '_' + str(time_taken) + '.avi')
+            self.save_motion_detection = True
+            self.is_motion_recording_named = True
+
+
+    def record_motion_detection(self, img):  # argument types: Mat
+        """
+        This method saves the motion detection scene when motion is detected
+        """
+        if self.save_motion_detection:
+            frame_width, frame_height = img.shape[1], img.shape[0]
+            if self.is_motion_recording_named:
+                # open video recording
+                self.motion_detection_writer.open(self.motion_recording_path, self.motion_detection_writer_fourcc, self.fps, (frame_width, frame_height), True) # true means colored
+                self.is_motion_recording_named = False
+            self.motion_detection_writer.write(img)
+        else:
+            # if motion detection is off, stop the recording
+            self.motion_detection_writer.release()
+            self.is_motion_recording_named = False

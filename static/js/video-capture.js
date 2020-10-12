@@ -591,12 +591,41 @@ function motionDetection(feedId) {
    * Activates motion detection
    */
   currentFeedId = feedId;
-  swal.fire({
-    "title": "",
-    "text": "Motion detection", 
-    "type": "success",
-    "confirmButtonText": 'OK',
-    "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+  if (!localMediaStream[feedId] && !isStreaming) {
+    return;
+  }
+
+  let detectionStatus = "0";
+  motionDetectionBtn = document.querySelector("#motionDetectionBtn" + feedId);
+  let class_attr = motionDetectionBtn.getAttribute("class");
+
+  if (class_attr.includes("btn-primary")) {
+    detectionStatus = "1";
+    motionDetectionBtn.setAttribute("class", "btn-success btn fa fa-wheelchair-alt fa-lg");
+    motionDetectionBtn.setAttribute("title", "Stop motion detection");
+  } else {
+    detectionStatus = "0";
+    motionDetectionBtn.setAttribute("class", "btn-primary btn fa fa-wheelchair-alt fa-lg");
+    motionDetectionBtn.setAttribute("title", "Start motion detection");
+  }
+
+  $.ajax({
+    url: "/motion_detection/" + detectionStatus + "_" + feedId,
+
+    method: "POST",
+
+    error: function(res, err) {
+      swal.fire({
+        "title": "",
+        "text": res.responseJSON.message, 
+        "type": "error",
+        "confirmButtonClass": "btn btn-brand btn-sm btn-bold"
+      });
+    },
+
+    success: function(res) {
+      snackbarFunc(res.message);
+    }
   });
 }
 

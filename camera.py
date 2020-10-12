@@ -14,6 +14,8 @@ class Camera(object):
         self.is_first_frame_display = False  # track if default image is displayed
         self.snapshot = False  # notify if snapshot should be saved
         self.save_video = False # notify whether video should be saved
+        self.motion_detection = False  # notify whether motion detection should be turned on/off
+        self.facial_recognition = False  # notify whether facial recognition should be turned on/off
         self.default_frame = pil_image_to_base64(Image.open(os.path.join('static', 'images', 'default_img.jpg')))
         self.to_process = []
         self.to_output = []
@@ -46,7 +48,8 @@ class Camera(object):
         if self.is_first_frame_display:
             output_img = self.img_processor.apply_processing(input_img, camera_id=self.camera_id, resize=False)
         else:
-            output_img = self.img_processor.apply_processing(input_img, camera_id=self.camera_id, resize=True, snapshot=self.snapshot, save_video=self.save_video)
+            output_img = self.img_processor.apply_processing(input_img, camera_id=self.camera_id, resize=True, \
+                snapshot=self.snapshot, save_video=self.save_video, facial_recognition=self.facial_recognition, motion_detection=self.motion_detection)
             # reset snapshot to false
             self.snapshot = False
         # output_str is a base64 string in ascii
