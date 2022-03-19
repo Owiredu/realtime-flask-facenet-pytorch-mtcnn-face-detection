@@ -28,6 +28,6 @@ class Config(object):
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
-    MAIL_USERNAME = 'unibasesoftware@gmail.com'
-    MAIL_DEFAULT_SENDER = 'unibasesoftware@gmail.com'
-    MAIL_PASSWORD = 'Godisgood2018'
+    MAIL_USERNAME = ''
+    MAIL_DEFAULT_SENDER = ''
+    MAIL_PASSWORD = ''
